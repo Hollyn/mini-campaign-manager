@@ -28,14 +28,17 @@ export const CampaignDetailPage = () => {
       {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
 
       <CampaignDetailHeader
+        canDelete={page.canDelete}
+        canSchedule={page.canSchedule}
+        canSend={page.canSend}
         campaign={page.campaign}
         isSending={page.isSending}
         onBack={page.onBack}
         onDelete={page.openDeleteModal}
-        onEdit={page.onEdit}
         onSchedule={page.openScheduleModal}
         onSend={page.handleSend}
         sendErrorMessage={page.sendErrorMessage}
+        status={page.status}
       />
 
       <CampaignStatsPanel stats={page.stats} />
@@ -60,6 +63,7 @@ export const CampaignDetailPage = () => {
         errorMessage={page.scheduleErrorMessage}
         isOpen={page.isScheduleOpen}
         isPending={page.isScheduling}
+        minValue={page.minScheduleValue}
         onChange={page.handleScheduleChange}
         onClose={page.closeScheduleModal}
         onSubmit={page.handleScheduleSubmit}

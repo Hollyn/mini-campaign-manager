@@ -11,6 +11,7 @@ interface ScheduleCampaignModalProps {
   errorMessage: string | null
   isOpen: boolean
   isPending: boolean
+  minValue: string
   onChange: (value: string) => void
   onClose: () => void
   onSubmit: FormEventHandler<HTMLFormElement>
@@ -21,6 +22,7 @@ export const ScheduleCampaignModal = ({
   errorMessage,
   isOpen,
   isPending,
+  minValue,
   onChange,
   onClose,
   onSubmit,
@@ -34,7 +36,7 @@ export const ScheduleCampaignModal = ({
         <Button onClick={onClose} type="button" variant="tertiary">
           {CAMPAIGN_COPY.actions.cancel}
         </Button>
-        <Button form="schedule-campaign-form" type="submit">
+        <Button disabled={isPending} form="schedule-campaign-form" type="submit">
           {isPending ? CAMPAIGN_COPY.states.scheduling : CAMPAIGN_COPY.actions.schedule}
         </Button>
       </>
@@ -47,7 +49,15 @@ export const ScheduleCampaignModal = ({
       {errorMessage ? <Alert variant="destructive">{errorMessage}</Alert> : null}
       <div className="space-y-2">
         <Label htmlFor="scheduled-at">Schedule date</Label>
-        <Input id="scheduled-at" onChange={(event) => onChange(event.target.value)} type="datetime-local" value={value} />
+        <Input
+          disabled={isPending}
+          id="scheduled-at"
+          min={minValue}
+          onChange={(event) => onChange(event.target.value)}
+          required
+          type="datetime-local"
+          value={value}
+        />
       </div>
     </form>
   </Dialog>
