@@ -1,6 +1,7 @@
 export const AUTH_ROUTES = {
   campaigns: '/campaigns',
   login: '/login',
+  recipients: '/recipients',
   register: '/register',
   root: '/'
 } as const

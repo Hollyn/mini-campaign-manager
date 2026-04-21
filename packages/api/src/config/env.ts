@@ -11,7 +11,25 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default('change_me_in_production'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
-  SEED: z.string().optional()
+  SEED: z.string().optional(),
+  TEST_DATABASE_URL: z.string().optional()
 })
 
-export const env = envSchema.parse(process.env)
+const parsedEnv = envSchema.parse(process.env)
+
+const deriveTestDatabaseUrl = (databaseUrl: string) => {
+  const url = new URL(databaseUrl)
+  const databaseName = url.pathname.replace(/^\//, '') || 'campaign_manager'
+
+  url.pathname = `/${databaseName}_test`
+
+  return url.toString()
+}
+
+export const env = {
+  ...parsedEnv,
+  DATABASE_URL:
+    parsedEnv.NODE_ENV === 'test'
+      ? parsedEnv.TEST_DATABASE_URL ?? deriveTestDatabaseUrl(parsedEnv.DATABASE_URL)
+      : parsedEnv.DATABASE_URL
+}

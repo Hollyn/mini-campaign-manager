@@ -12,6 +12,7 @@ const buttonVariants = cva(
     },
     variants: {
       variant: {
+        destructive: 'bg-error-container text-on-error-container hover:brightness-95',
         primary: 'bg-primary text-on-primary hover:bg-primary-dim',
         secondary:
           'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed-dim',

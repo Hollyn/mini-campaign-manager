@@ -1,4 +1,6 @@
-import { FOUNDATION_BADGES, FOUNDATION_COPY } from '../constants/app'
+import { NavLink, Outlet } from 'react-router-dom'
+
+import { APP_SHELL_COPY, APP_SHELL_NAVIGATION } from '../constants/app'
 import { AUTH_COPY } from '../constants/auth'
 import { useLogout } from '../hooks/use-logout'
 import { useAuthStore } from '../store/auth-store'
@@ -10,66 +12,56 @@ export const AppShell = () => {
   const logout = useLogout()
 
   return (
-    <main className="min-h-screen bg-surface px-4 py-6 text-on-surface sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="bg-surface-container-low px-6 py-8 sm:px-8 sm:py-10">
-            <div className="space-y-5">
-              <p className="text-[0.75rem] font-medium uppercase tracking-[0.3em] text-primary">
-                {FOUNDATION_COPY.eyebrow}
-              </p>
-              <div className="space-y-3">
-                <h1 className="max-w-3xl text-[2.6rem] font-medium leading-none tracking-tight text-on-background sm:text-[4.5rem]">
-                  {FOUNDATION_COPY.heading}
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-on-surface-variant sm:text-base">
-                  {FOUNDATION_COPY.description}
-                </p>
+    <main className="min-h-screen bg-[linear-gradient(180deg,#faf8ff_0%,#f4f5ff_100%)] text-on-surface">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-8 lg:py-8">
+        <aside className="w-full shrink-0 lg:w-[300px]">
+          <Card className="h-full rounded-[2rem] border border-white/70 bg-[linear-gradient(160deg,rgba(242,243,255,0.98),rgba(226,231,255,0.98))] p-6 sm:p-7">
+            <div className="flex h-full flex-col gap-8">
+              <div className="space-y-4">
+                <div className="inline-flex rounded-full bg-primary px-4 py-2 text-[0.7rem] font-medium uppercase tracking-[0.3em] text-on-primary">
+                  {APP_SHELL_COPY.brand}
+                </div>
+                <div className="space-y-3">
+                  <h1 className="text-3xl font-medium tracking-tight text-on-background">{APP_SHELL_COPY.heading}</h1>
+                  <p className="text-sm leading-7 text-on-surface-variant">{APP_SHELL_COPY.description}</p>
+                </div>
               </div>
-              <p className="text-sm text-on-surface-variant">
-                {AUTH_COPY.workspace.welcomePrefix}{' '}
-                <span className="font-medium text-on-surface">{user?.name}</span>
-              </p>
-            </div>
-          </Card>
 
-          <Card className="flex flex-col justify-between gap-8 bg-surface-container-highest px-6 py-8 sm:px-8 sm:py-10">
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-2">
-                {FOUNDATION_BADGES.map((badge) => (
-                  <span
-                    key={badge}
-                    className="rounded-full bg-secondary-container px-3 py-1 text-[0.75rem] font-medium uppercase tracking-[0.2em] text-on-secondary-container"
+              <nav className="space-y-2">
+                {APP_SHELL_NAVIGATION.map((item) => (
+                  <NavLink
+                    className={({ isActive }) =>
+                      [
+                        'block rounded-[1.25rem] px-4 py-4 transition-colors',
+                        isActive
+                          ? 'bg-white text-on-background shadow-[0_16px_40px_rgba(31,49,89,0.08)]'
+                          : 'text-on-surface-variant hover:bg-white/60 hover:text-on-surface'
+                      ].join(' ')
+                    }
+                    key={item.to}
+                    to={item.to}
                   >
-                    {badge}
-                  </span>
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.22em]">{item.description}</p>
+                  </NavLink>
                 ))}
-              </div>
-              <div className="space-y-2">
-                <p className="text-[0.75rem] font-medium uppercase tracking-[0.28em] text-on-surface-variant">
-                  {FOUNDATION_COPY.statusLabel}
-                </p>
-                <p className="text-3xl font-medium tracking-tight text-primary">
-                  {FOUNDATION_COPY.statusValue}
-                </p>
-              </div>
+              </nav>
+
+              <Card className="rounded-[1.5rem] bg-white/75 p-5 shadow-[0_18px_50px_rgba(31,49,89,0.08)]">
+                <p className="text-[0.72rem] uppercase tracking-[0.26em] text-on-surface-variant">{APP_SHELL_COPY.signedInLabel}</p>
+                <p className="mt-3 text-lg font-medium text-on-background">{user?.name}</p>
+                <p className="mt-1 text-sm text-on-surface-variant">{user?.email}</p>
+              </Card>
+
+              <Button onClick={() => logout.mutate()} type="button" variant="secondary">
+                {logout.isPending ? AUTH_COPY.logout.pendingLabel : AUTH_COPY.logout.label}
+              </Button>
             </div>
-
-            <Button onClick={() => logout.mutate()} type="button" variant="secondary">
-              {logout.isPending ? AUTH_COPY.logout.pendingLabel : AUTH_COPY.logout.label}
-            </Button>
           </Card>
-        </section>
+        </aside>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {AUTH_COPY.workspace.badges.map((badge) => (
-            <Card className="bg-surface-container-lowest px-6 py-6" key={badge}>
-              <p className="text-[0.75rem] font-medium uppercase tracking-[0.28em] text-on-surface-variant">
-                {AUTH_COPY.workspace.metadataLabel}
-              </p>
-              <p className="mt-3 text-lg font-medium text-on-background">{badge}</p>
-            </Card>
-          ))}
+        <section className="min-w-0 flex-1">
+          <Outlet />
         </section>
       </div>
     </main>
