@@ -1,97 +1,28 @@
 # Mini Campaign Manager
 
-Mini Campaign Manager monorepo. Goal: build small full-stack MarTech app for creating, scheduling, sending, and tracking email campaigns.
-
-Current repo status: Phase 1 foundation done. Project has monorepo scaffold, PostgreSQL migrations, Sequelize models, Express bootstrap, `GET /health`, Docker wiring, env setup, and minimal frontend shell. Auth, recipients, campaign CRUD, send flow, seed data, and tests still pending.
-
-## Tech Stack
-
-- Monorepo: Yarn workspaces
-- Backend: Node.js, Express 4, Sequelize 6, sequelize-typescript, Zod
-- Frontend: React 18, TypeScript, Vite, Tailwind CSS
-- Database: PostgreSQL 15
-- Infra: Docker Compose
-
-## Project Structure
-
-```text
-mini-campaign-manager/
-|- docker-compose.yml
-|- package.json
-|- .env.example
-|- packages/
-   |- api/
-   |- db/
-   |- frontend/
-```
-
-## Current Scope
-
-Implemented now:
-
-- Root monorepo scaffold and workspace commands
-- DB migrations for `users`, `campaigns`, `recipients`, `campaign_recipients`
-- Required indexes from PRD
-- Typed Sequelize models with associations
-- Express app bootstrap with centralized error handling
-- Health endpoint at `GET /health`
-- Frontend placeholder shell and shared API contract types
-- Local and Docker env wiring
-- One-command local dev script
-
-Not implemented yet:
-
-- Auth flow
-- Recipients API and hooks
-- Campaign CRUD and send/schedule actions
-- Seed data
-- Jest/Supertest API tests
+Mini Campaign Manager is yarn monorepo for creating, scheduling, sending, and tracking email campaigns. Stack combines Express API, React + Vite frontend, PostgreSQL, Sequelize migrations, and Docker Compose local setup.
 
 ## Quick Start
 
-Recommended path for current repo: local dev with Dockerized Postgres.
-
-1. Install dependencies:
-
-```bash
-yarn install
-```
-
-2. Start full local dev stack:
-
-```bash
-yarn dev
-```
-
-3. Open app and API:
-
-- Frontend: `http://localhost:5173`
-- API health: `http://localhost:4000/health`
-
-Notes:
-
-- If port `5173` already busy, Vite auto-picks next free port like `5174`
-- Current frontend is foundation placeholder, not final product UI yet
-
-## Docker Start
-
-You can also boot full stack with Docker:
+1. Start full stack:
 
 ```bash
 docker compose up --build
 ```
 
-Services:
+2. Open app: `http://localhost:5173`
+3. Sign in with seeded demo account:
 
-- Frontend: `http://localhost:5173`
-- API: `http://localhost:4000`
-- Postgres: `localhost:${POSTGRES_PORT}`
+- Email: `demo@example.com`
+- Password: `password123`
 
-If local ports conflict, change values in `/.env` first.
+Notes:
+
+- Compose waits for Postgres health, runs migrations before API boot, and uses `http://api:4000` for container-to-container Vite proxying
+- Demo data loads when `SEED=true`; `.env.example` ships with that value for quick start
+- Set `SEED=false` if you want to keep existing data on later restarts
 
 ## Manual Setup
-
-If you want to run API and frontend on host machine and only keep Postgres in Docker:
 
 1. Install dependencies:
 
@@ -99,80 +30,122 @@ If you want to run API and frontend on host machine and only keep Postgres in Do
 yarn install
 ```
 
-2. Start Postgres:
+2. Copy local env file:
 
 ```bash
-yarn dev:db
+cp .env.example .env
 ```
 
-3. Run migrations:
+3. Start Postgres only:
+
+```bash
+docker compose up -d db
+```
+
+4. Run database migrations:
 
 ```bash
 yarn db:migrate
 ```
 
-4. Start API:
+5. Seed demo data:
 
 ```bash
-yarn dev:api
+yarn db:seed
 ```
 
-5. Start frontend in new terminal:
+6. Start API in one terminal:
 
 ```bash
-yarn dev:frontend
+yarn workspace @campaign/api dev
 ```
 
-## Available Commands
+7. Start frontend in second terminal:
+
+```bash
+yarn workspace @campaign/frontend dev
+```
+
+App URLs:
+
+- Frontend: `http://localhost:5173`
+- API health: `http://localhost:4000/health`
+
+## Useful Commands
 
 | Command | Purpose |
 | --- | --- |
-| `yarn dev` | Start DB, wait for healthy DB, run migrations, start API and frontend |
+| `yarn dev` | Start local dev flow with Dockerized Postgres, migrations, API, and frontend |
 | `yarn dev:db` | Start PostgreSQL container only |
-| `yarn dev:setup` | Start DB, wait, migrate |
-| `yarn dev:api` | Start Express API in watch mode |
-| `yarn dev:frontend` | Start Vite frontend |
+| `yarn dev:setup` | Start DB, wait for health, run migrations |
+| `yarn workspace @campaign/api dev` | Run API in watch mode |
+| `yarn workspace @campaign/frontend dev` | Run frontend in watch mode |
 | `yarn db:migrate` | Run Sequelize migrations |
-| `yarn db:seed` | Run seeders when they exist |
-| `yarn build` | Build all workspaces |
+| `yarn db:seed` | Load demo data |
+| `yarn workspace @campaign/api test` | Run API Jest + Supertest suite |
+| `yarn workspace @campaign/frontend build` | Run frontend production build |
 
+## Environment Variables
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `POSTGRES_DB` | `campaign_manager` | Docker Compose Postgres database name |
+| `POSTGRES_USER` | `campaign` | Docker Compose Postgres user |
+| `POSTGRES_PASSWORD` | `campaign` | Docker Compose Postgres password |
+| `POSTGRES_PORT` | `55433` | Host port exposed for local Postgres access |
+| `DATABASE_URL` | `postgresql://campaign:campaign@localhost:55433/campaign_manager` | Local API and migration connection string |
+| `TEST_DATABASE_URL` | Derived from `DATABASE_URL` | Optional override for Jest database |
+| `JWT_SECRET` | `change_me_in_production` | Session signing secret |
+| `JWT_EXPIRES_IN` | `7d` | JWT lifetime |
+| `PORT` | `4000` | API port |
+| `FRONTEND_PORT` | `5173` | Vite dev server port |
+| `VITE_API_PROXY_TARGET` | `http://localhost:4000` | Local frontend proxy target for `/api`; Docker Compose overrides this to `http://api:4000` |
+| `SEED` | `true` | Compose startup seeding toggle |
 
 ## Testing
 
-Test suite not added yet. Phase 6 in `ai-tasks/phase6.md` covers required Jest + Supertest work.
-
-Planned API test command:
+Run API tests with:
 
 ```bash
 yarn workspace @campaign/api test
 ```
 
-## How I Used OpenCode (alternative to Claude Code)
+## Workspace Layout
 
-### 1. What tasks I delegated to OpenCode
+```text
+mini-campaign-manager/
+|- docker-compose.yml
+|- package.json
+|- packages/
+|  |- api/
+|  |- db/
+|  |- frontend/
+```
 
-- Scaffolded monorepo root, workspace manifests, Dockerfiles, and Compose setup
-- Wrote Sequelize migrations and typed model classes
-- Bootstrapped Express app, error middleware, and `GET /health`
-- Set up frontend placeholder shell and shared API contract types
-- Fixed local-vs-Docker env mismatch and added one-command local dev script
+## How I Used Claude Code
+
+### 1. Tasks I delegated
+
+- Scaffolded repo structure and yarn workspace wiring
+- Implemented campaign, recipient, and auth flows across API and frontend
+- Added migrations, seed data, and test coverage for core business rules
+- Tightened Docker Compose, startup checks, and frontend error handling polish
 
 ### 2. Real prompts I used
 
-- `follow @ai-tasks/phase1.md`
-- `run yarn dev:api and fix the errors`
-- `add one-command full local dev script`
+- `follow ai-tasks/phase1.md`
+- `follow ai-tasks/phase6.md`
+- `follow ai-tasks/phase7.md`
 
-### 3. Where OpenCode was wrong or needed correction
+### 3. Where Claude Code needed correction
 
-- Initial env setup used Docker hostname `db` in local `DATABASE_URL`; that broke `yarn dev:api` on host machine and had to be corrected to `localhost`
-- Initial full-stack Docker boot ran into host port conflicts; needed manual debugging and safer local port choices
-- README requirements in PRD assume later phases like auth, seed data, and tests exist; had to keep this README honest about current scope instead of pretending whole app already shipped
+- Infra defaults had to stay aligned across `.env.example`, Docker Compose, and Vite proxy settings
+- Error UX needed review so mutation failures surfaced globally instead of only inside local forms and modals
+- README copy needed final human pass to keep setup steps honest and consistent with actual scripts
 
-### 4. What I would not let OpenCode do and why
+### 4. What I would not delegate
 
-- Pick real production secrets or credentials; secrets need human ownership
-- Force-push, reset, or delete unrelated local state; too destructive
-- Invent completed features or fake test results; README and docs must match actual repo state
-- Make product decisions without review when they affect UX, security, or business rules
-
+- Choosing production secrets or deployment credentials
+- Destructive git operations on shared work without explicit approval
+- Product or security decisions that change business rules without review
+- Claiming tests or runtime behavior passed without actually verifying them
