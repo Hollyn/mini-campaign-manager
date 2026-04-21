@@ -8,3 +8,5 @@ yarn-error.log
 ai-tasks
 docs/
 AGENTS.md
+ui-samples
+.codesight/

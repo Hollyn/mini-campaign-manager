@@ -1,10 +1,10 @@
-export const FOUNDATION_BADGES = ['API contract', 'Typed models', 'Docker bootstrap'] as const
+export const FOUNDATION_BADGES = ['Session ready', 'Cookie secured', 'Routes guarded'] as const
 
 export const FOUNDATION_COPY = {
   description:
-    'Phase 1 scaffold ready. Backend, database, and frontend foundations now share campaign status contracts and container wiring.',
-  eyebrow: 'Mini Campaign Manager',
-  heading: 'Foundation built for next phases',
-  statusLabel: 'Health endpoint',
-  statusValue: 'GET /health'
+    'Authentication now protects workspace entry. Campaign creation, delivery, and reporting will plug into this secured shell in later phases.',
+  eyebrow: 'Authenticated workspace',
+  heading: 'Campaign workspace secured',
+  statusLabel: 'Next milestone',
+  statusValue: 'Campaign CRUD'
 } as const

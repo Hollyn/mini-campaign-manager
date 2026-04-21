@@ -43,6 +43,7 @@ export class Recipient extends Model<InferAttributes<Recipient>, InferCreationAt
   })
   declare name: string
 
+  @Default(DataType.NOW)
   @Column({
     allowNull: false,
     field: 'created_at',
