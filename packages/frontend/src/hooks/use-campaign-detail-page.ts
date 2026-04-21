@@ -1,8 +1,9 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { useNavigate } from 'react-router-dom'
 
-import { CAMPAIGN_COPY, campaignEditRoute } from '../constants/campaigns'
+import { CampaignStatus } from '../api/types'
+import { CAMPAIGN_COPY } from '../constants/campaigns'
 import { useCampaign } from './use-campaign'
 import { useDeleteCampaign } from './use-delete-campaign'
 import { useScheduleCampaign } from './use-schedule-campaign'
@@ -20,14 +21,28 @@ const toDateTimeLocalValue = (value: string | null) => {
   return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16)
 }
 
+const getCurrentDateTimeLocalValue = () => toDateTimeLocalValue(new Date().toISOString())
+
+const toActionState = (status: CampaignStatus, isSendStarting: boolean): CampaignStatus => {
+  if (isSendStarting && (status === 'draft' || status === 'scheduled')) {
+    return 'sending'
+  }
+
+  return status
+}
+
 export const useCampaignDetailPage = (campaignId: string) => {
   const navigate = useNavigate()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
+  const [isSendStarting, setIsSendStarting] = useState(false)
+  const [minScheduleValue, setMinScheduleValue] = useState(getCurrentDateTimeLocalValue())
   const [scheduleValue, setScheduleValue] = useState('')
   const [scheduleClientError, setScheduleClientError] = useState<string | null>(null)
 
   const campaignQuery = useCampaign(campaignId, (data) => (data?.campaign.status === 'sending' ? 2000 : false))
+  const campaignStatus = campaignQuery.data?.campaign.status ?? 'draft'
+  const actionState = useMemo(() => toActionState(campaignStatus, isSendStarting), [campaignStatus, isSendStarting])
 
   const deleteMutation = useDeleteCampaign({
     onSuccess: async () => {
@@ -42,7 +57,17 @@ export const useCampaignDetailPage = (campaignId: string) => {
     }
   })
 
-  const sendMutation = useSendCampaign()
+  const sendMutation = useSendCampaign({
+    onError: async () => {
+      setIsSendStarting(false)
+    }
+  })
+
+  useEffect(() => {
+    if (campaignStatus === 'sending' || campaignStatus === 'sent') {
+      setIsSendStarting(false)
+    }
+  }, [campaignStatus])
 
   const pageErrorMessage = useMemo(() => {
     if (!campaignQuery.error) {
@@ -88,6 +113,7 @@ export const useCampaignDetailPage = (campaignId: string) => {
   const openScheduleModal = () => {
     scheduleMutation.reset()
     setScheduleClientError(null)
+    setMinScheduleValue(getCurrentDateTimeLocalValue())
     setScheduleValue(toDateTimeLocalValue(campaignQuery.data?.campaign.scheduledAt ?? null))
     setIsScheduleOpen(true)
   }
@@ -116,7 +142,20 @@ export const useCampaignDetailPage = (campaignId: string) => {
     })
   }
 
+  const handleSend = () => {
+    if (campaignId.length === 0) {
+      return
+    }
+
+    sendMutation.reset()
+    setIsSendStarting(true)
+    sendMutation.mutate(campaignId)
+  }
+
   return {
+    canDelete: actionState === 'draft',
+    canSchedule: actionState === 'draft',
+    canSend: actionState === 'draft' || actionState === 'scheduled',
     campaign: campaignQuery.data?.campaign ?? null,
     closeDeleteModal: () => setIsDeleteOpen(false),
     closeScheduleModal: () => setIsScheduleOpen(false),
@@ -124,16 +163,16 @@ export const useCampaignDetailPage = (campaignId: string) => {
     handleDeleteConfirm: () => deleteMutation.mutate(campaignId),
     handleScheduleChange: (value: string) => setScheduleValue(value),
     handleScheduleSubmit,
-    handleSend: () => sendMutation.mutate(campaignId),
+    handleSend,
     isDeleteOpen,
     isDeleting: deleteMutation.isPending,
     isLoading: campaignQuery.isPending,
     isRefetching: campaignQuery.isFetching,
     isScheduleOpen,
     isScheduling: scheduleMutation.isPending,
-    isSending: sendMutation.isPending,
+    isSending: actionState === 'sending',
+    minScheduleValue,
     onBack: () => navigate('/campaigns'),
-    onEdit: () => navigate(campaignEditRoute(campaignId)),
     openDeleteModal,
     openScheduleModal,
     pageErrorMessage,
@@ -141,7 +180,7 @@ export const useCampaignDetailPage = (campaignId: string) => {
     scheduleErrorMessage,
     scheduleValue,
     sendErrorMessage,
-    status: campaignQuery.data?.campaign.status ?? 'draft',
+    status: actionState,
     stats: campaignQuery.data?.stats ?? null
   }
 }
