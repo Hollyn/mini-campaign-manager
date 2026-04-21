@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-campaign}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campaign}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-55433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -27,7 +27,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       PORT: ${PORT:-4000}
-      SEED: ${SEED:-false}
+      SEED: ${SEED:-true}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$PORT/health >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     ports:
       - "${PORT:-4000}:4000"
     command: >-
@@ -40,14 +46,21 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       FRONTEND_PORT: ${FRONTEND_PORT:-5173}
       VITE_API_PROXY_TARGET: http://api:4000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$FRONTEND_PORT >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     command: >-
-      sh -c "yarn workspace @campaign/frontend dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
+      sh -c "yarn workspace @campaign/frontend dev --host 0.0.0.0 --port $$FRONTEND_PORT"
 
 volumes:
   db-data:
