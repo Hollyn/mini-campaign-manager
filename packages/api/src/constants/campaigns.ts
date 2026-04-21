@@ -18,5 +18,6 @@ export const CAMPAIGN_PAGINATION = {
 export const CAMPAIGN_SEND = {
   failureThreshold: 0.2,
   maxDelayMs: 100,
-  minDelayMs: 50
+  minDelayMs: 50,
+  openThreshold: 0.5
 } as const

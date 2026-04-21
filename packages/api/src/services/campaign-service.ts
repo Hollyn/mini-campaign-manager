@@ -213,10 +213,12 @@ const processCampaignSend = async (campaignId: string) => {
       await sleep(delay)
 
       const isSent = Math.random() >= CAMPAIGN_SEND.failureThreshold
+      const sentAt = isSent ? new Date() : null
+      const isOpened = isSent && Math.random() >= CAMPAIGN_SEND.openThreshold
 
       await recipient.update({
-        openedAt: null,
-        sentAt: isSent ? new Date() : null,
+        openedAt: isOpened ? sentAt : null,
+        sentAt,
         status: isSent ? 'sent' : 'failed'
       })
     }

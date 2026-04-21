@@ -83,6 +83,8 @@ const waitForCampaignToBeSent = async (campaignId: string) => {
   throw new Error('Timed out waiting for campaign to finish sending')
 }
 
+const roundRate = (value: number) => Number(value.toFixed(2))
+
 describe('campaign routes', () => {
   beforeAll(async () => {
     await ensureTestDatabase()
@@ -178,10 +180,19 @@ describe('campaign routes', () => {
         campaignId: campaign.id
       }
     })
+    const detailResponse = await agent.get(`/api/campaigns/${campaign.id}`)
+    const openedCount = campaignRecipients.filter((recipient) => recipient.openedAt !== null).length
+    const sentCount = campaignRecipients.filter((recipient) => recipient.status === 'sent').length
+    const expectedOpenRate = sentCount === 0 ? 0 : roundRate(openedCount / sentCount)
 
     expect(sentCampaign?.status).toBe('sent')
     expect(campaignRecipients).toHaveLength(3)
     expect(campaignRecipients.every((recipient) => recipient.status === 'sent' || recipient.status === 'failed')).toBe(true)
     expect(campaignRecipients.every((recipient) => recipient.status !== 'pending')).toBe(true)
+    expect(campaignRecipients.every((recipient) => recipient.status === 'sent' || recipient.openedAt === null)).toBe(true)
+    expect(detailResponse.status).toBe(200)
+    expect(detailResponse.body.stats.opened).toBe(openedCount)
+    expect(detailResponse.body.stats.sent).toBe(sentCount)
+    expect(detailResponse.body.stats.open_rate).toBe(expectedOpenRate)
   })
 })
