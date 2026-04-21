@@ -7,7 +7,7 @@ loadEnv({ path: path.resolve(__dirname, '../../../../.env') })
 
 const envSchema = z.object({
   DATABASE_URL: z.string().default('postgresql://campaign:campaign@localhost:5432/campaign_manager'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().regex(/^(\d+)(ms|s|m|h|d)?$/).default('7d'),
   JWT_SECRET: z.string().default('change_me_in_production'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),

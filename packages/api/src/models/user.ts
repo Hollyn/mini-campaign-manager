@@ -47,6 +47,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   })
   declare password: string
 
+  @Default(DataType.NOW)
   @Column({
     allowNull: false,
     field: 'created_at',

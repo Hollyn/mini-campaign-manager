@@ -5,25 +5,35 @@ const config: Config = {
   theme: {
     extend: {
       borderRadius: {
-        lg: 'var(--radius-lg)',
-        md: 'calc(var(--radius-lg) - 2px)',
-        sm: 'calc(var(--radius-lg) - 6px)'
+        lg: 'var(--radius-md)',
+        md: 'var(--radius-md)',
+        sm: 'var(--radius-md)'
       },
       boxShadow: {
-        glow: '0 24px 60px rgba(13, 36, 53, 0.18)'
+        ambient: 'var(--shadow-ambient)'
       },
       colors: {
-        background: 'var(--color-background)',
-        border: 'var(--color-border)',
-        card: 'var(--color-card)',
-        foreground: 'var(--color-foreground)',
-        muted: 'var(--color-muted)',
         primary: 'var(--color-primary)',
-        ring: 'var(--color-ring)'
+        'primary-dim': 'var(--color-primary-dim)',
+        'on-primary': 'var(--color-on-primary)',
+        'primary-container': 'var(--color-primary-container)',
+        'on-primary-container': 'var(--color-on-primary-container)',
+        'secondary-container': 'var(--color-secondary-container)',
+        'on-secondary-container': 'var(--color-on-secondary-container)',
+        'secondary-fixed-dim': 'var(--color-secondary-fixed-dim)',
+        surface: 'var(--color-surface)',
+        'surface-container-low': 'var(--color-surface-container-low)',
+        'surface-container-high': 'var(--color-surface-container-high)',
+        'surface-container-highest': 'var(--color-surface-container-highest)',
+        'surface-container-lowest': 'var(--color-surface-container-lowest)',
+        'on-surface': 'var(--color-on-surface)',
+        'on-background': 'var(--color-on-background)',
+        'on-surface-variant': 'var(--color-on-surface-variant)',
+        'error-container': 'var(--color-error-container)',
+        'on-error-container': 'var(--color-on-error-container)'
       },
       fontFamily: {
-        body: ['\"Space Grotesk\"', 'system-ui', 'sans-serif'],
-        display: ['\"Fraunces\"', 'Georgia', 'serif']
+        body: ['"Inter"', 'system-ui', 'sans-serif']
       }
     }
   },

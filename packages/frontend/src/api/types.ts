@@ -9,6 +9,27 @@ export interface ApiError {
   details?: string[]
 }
 
+export interface AuthUser {
+  email: string
+  id: string
+  name: string
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  email: string
+  name: string
+  password: string
+}
+
+export interface AuthResponse {
+  user: AuthUser
+}
+
 export interface HealthResponse {
   service: 'api'
   status: 'ok'

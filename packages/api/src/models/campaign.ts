@@ -77,6 +77,7 @@ export class Campaign extends Model<InferAttributes<Campaign>, InferCreationAttr
   })
   declare createdBy: string
 
+  @Default(DataType.NOW)
   @Column({
     allowNull: false,
     field: 'created_at',
@@ -84,6 +85,7 @@ export class Campaign extends Model<InferAttributes<Campaign>, InferCreationAttr
   })
   declare createdAt: CreationOptional<Date>
 
+  @Default(DataType.NOW)
   @Column({
     allowNull: false,
     field: 'updated_at',
