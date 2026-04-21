@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-campaign_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-campaign}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campaign}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-campaign}:${POSTGRES_PASSWORD:-campaign}@db:5432/${POSTGRES_DB:-campaign_manager}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: ${PORT:-4000}
+      SEED: ${SEED:-false}
+    ports:
+      - "${PORT:-4000}:4000"
+    command: >-
+      sh -c "yarn workspace @campaign/db migrate &&
+      if [ \"$$SEED\" = \"true\" ]; then yarn workspace @campaign/db seed; fi &&
+      yarn workspace @campaign/api start:docker"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    depends_on:
+      - api
+    environment:
+      FRONTEND_PORT: ${FRONTEND_PORT:-5173}
+      VITE_API_PROXY_TARGET: http://api:4000
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    command: >-
+      sh -c "yarn workspace @campaign/frontend dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
+
+volumes:
+  db-data:
