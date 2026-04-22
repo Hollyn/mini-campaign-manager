@@ -38,6 +38,7 @@ export const loginRequestSchema = z.object({
 })
 
 export const authResponseSchema = z.object({
+  token: z.string().min(1).optional(),
   user: authUserSchema
 })
 

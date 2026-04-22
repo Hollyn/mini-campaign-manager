@@ -12,7 +12,9 @@ import { apiRequest } from './client'
 const toCampaignListQuery = (query: CampaignListQuery) => {
   const params = new URLSearchParams({
     limit: String(query.limit),
-    page: String(query.page)
+    page: String(query.page),
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder
   })
 
   if (query.search && query.search.trim().length > 0) {

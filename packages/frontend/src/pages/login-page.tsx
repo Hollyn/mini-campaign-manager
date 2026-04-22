@@ -7,19 +7,22 @@ export const LoginPage = () => {
   const login = useLogin()
 
   return (
-    <AuthLayout description={AUTH_COPY.login.description} title={AUTH_COPY.login.title}>
+    <AuthLayout>
       <AuthForm
-        alternateActionLabel={AUTH_COPY.login.alternateActionLabel}
         alternatePrompt={AUTH_COPY.login.alternatePrompt}
+        alternateActionLabel={AUTH_COPY.login.alternateActionLabel}
         alternateTo={AUTH_ROUTES.register}
+        description={AUTH_COPY.login.description}
+        eyebrow={AUTH_COPY.eyebrow}
         errorMessage={login.errorMessage}
-        fields={AUTH_FORM_FIELDS.login}
         footerHint={AUTH_COPY.login.footerHint}
+        fields={AUTH_FORM_FIELDS.login}
         isPending={login.isPending}
         onChange={login.handleChange}
         onSubmit={login.handleSubmit}
         submitLabel={AUTH_COPY.login.submitLabel}
         submittingLabel={AUTH_COPY.login.pendingLabel}
+        title={AUTH_COPY.login.title}
         values={login.values}
       />
     </AuthLayout>

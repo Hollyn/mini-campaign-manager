@@ -1,26 +1,29 @@
 import {
   CreateRecipientRequest,
+  RecipientListQuery,
   RecipientListResponse,
   RecipientResponse,
   UpdateRecipientRequest
 } from './types'
 import { apiRequest } from './client'
 
-const toRecipientQuery = (page: number, limit: number, search?: string) => {
+const toRecipientQuery = (query: RecipientListQuery) => {
   const params = new URLSearchParams({
-    limit: String(limit),
-    page: String(page)
+    limit: String(query.limit),
+    page: String(query.page),
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder
   })
 
-  if (search && search.trim().length > 0) {
-    params.set('search', search.trim())
+  if (query.search && query.search.trim().length > 0) {
+    params.set('search', query.search.trim())
   }
 
   return params.toString()
 }
 
-export const getRecipients = (page: number, limit: number, search?: string) =>
-  apiRequest<RecipientListResponse>(`/recipients?${toRecipientQuery(page, limit, search)}`)
+export const getRecipients = (query: RecipientListQuery) =>
+  apiRequest<RecipientListResponse>(`/recipients?${toRecipientQuery(query)}`)
 
 export const createRecipient = (payload: CreateRecipientRequest) =>
   apiRequest<RecipientResponse>('/recipients', {

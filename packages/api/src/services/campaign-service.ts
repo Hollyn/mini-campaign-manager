@@ -1,4 +1,4 @@
-import { Op, Transaction } from 'sequelize'
+import { literal, Op, Order, Transaction } from 'sequelize'
 
 import { sequelize } from '../config/database'
 import { CAMPAIGN_MESSAGES, CAMPAIGN_SEND } from '../constants/campaigns'
@@ -6,9 +6,11 @@ import { Campaign, CampaignRecipient, Recipient } from '../models'
 import { AppError } from '../utils/app-error'
 import {
   CampaignListQuery,
+  CampaignListSortBy,
   CampaignRecipientActivity,
   CampaignStats,
   CreateCampaignRequest,
+  SortOrder,
   UpdateCampaignRequest
 } from '../validations/campaign'
 import { CampaignStatus } from '../validations/shared'
@@ -18,6 +20,8 @@ interface CampaignDetailResult {
   recipients: CampaignRecipientActivity[]
   stats: CampaignStats
 }
+
+const activeCampaignSendJobs = new Set<string>()
 
 const roundRate = (value: number) => Number(value.toFixed(2))
 
@@ -81,6 +85,23 @@ const toCampaignWhere = (userId: string, query?: CampaignListQuery) => {
   }
 
   return where
+}
+
+const toCampaignOrder = (sortBy: CampaignListSortBy, sortOrder: SortOrder): Order => {
+  const direction = sortOrder.toUpperCase() as 'ASC' | 'DESC'
+
+  switch (sortBy) {
+    case 'name':
+      return [['name', direction]]
+    case 'recipientCount':
+      return [[literal('(SELECT COUNT(*) FROM campaign_recipients AS cr WHERE cr.campaign_id = "Campaign"."id")'), direction]]
+    case 'status':
+      return [['status', direction]]
+    case 'subject':
+      return [['subject', direction]]
+    default:
+      return [['createdAt', direction]]
+  }
 }
 
 const findCampaignOrThrow = async (campaignId: string, userId: string, transaction?: Transaction) => {
@@ -196,6 +217,48 @@ const getCampaignRecipients = async (campaignId: string) => {
     .sort((left, right) => left.name.localeCompare(right.name))
 }
 
+const queueCampaignSendProcessing = (campaignId: string) => {
+  if (activeCampaignSendJobs.has(campaignId)) {
+    return
+  }
+
+  activeCampaignSendJobs.add(campaignId)
+
+  setImmediate(async () => {
+    try {
+      await processCampaignSend(campaignId)
+    } finally {
+      activeCampaignSendJobs.delete(campaignId)
+    }
+  })
+}
+
+const claimCampaignForSend = async (campaignId: string, constraints: Record<string, unknown> = {}) => {
+  const [updatedCount, updatedCampaigns] = await Campaign.update(
+    {
+      scheduledAt: null,
+      status: 'sending',
+      updatedAt: new Date()
+    },
+    {
+      returning: true,
+      where: {
+        ...constraints,
+        id: campaignId,
+        status: {
+          [Op.in]: ['draft', 'scheduled']
+        }
+      }
+    }
+  )
+
+  if (updatedCount === 0) {
+    return null
+  }
+
+  return updatedCampaigns[0] ?? null
+}
+
 const processCampaignSend = async (campaignId: string) => {
   try {
     const pendingRecipients = await CampaignRecipient.findAll({
@@ -216,25 +279,78 @@ const processCampaignSend = async (campaignId: string) => {
       const sentAt = isSent ? new Date() : null
       const isOpened = isSent && Math.random() >= CAMPAIGN_SEND.openThreshold
 
-      await recipient.update({
-        openedAt: isOpened ? sentAt : null,
-        sentAt,
-        status: isSent ? 'sent' : 'failed'
-      })
+      await CampaignRecipient.update(
+        {
+          openedAt: isOpened ? sentAt : null,
+          sentAt,
+          status: isSent ? 'sent' : 'failed'
+        },
+        {
+          where: {
+            campaignId,
+            recipientId: recipient.recipientId,
+            status: 'pending'
+          }
+        }
+      )
     }
 
-    await Campaign.update(
-      {
-        status: 'sent'
-      },
-      {
-        where: {
-          id: campaignId
-        }
+    const pendingRecipientCount = await CampaignRecipient.count({
+      where: {
+        campaignId,
+        status: 'pending'
       }
-    )
+    })
+
+    if (pendingRecipientCount === 0) {
+      await Campaign.update(
+        {
+          status: 'sent',
+          updatedAt: new Date()
+        },
+        {
+          where: {
+            id: campaignId,
+            status: 'sending'
+          }
+        }
+      )
+    }
   } catch (error) {
     console.error('Campaign send processing failed', error)
+  }
+}
+
+export const recoverSendingCampaigns = async () => {
+  const sendingCampaigns = await Campaign.findAll({
+    attributes: ['id'],
+    where: {
+      status: 'sending'
+    }
+  })
+
+  sendingCampaigns.forEach((campaign) => {
+    queueCampaignSendProcessing(campaign.id)
+  })
+}
+
+export const runScheduledCampaignSweep = async () => {
+  const dueCampaigns = await Campaign.findAll({
+    attributes: ['id'],
+    where: {
+      scheduledAt: {
+        [Op.lte]: new Date()
+      },
+      status: 'scheduled'
+    }
+  })
+
+  for (const campaign of dueCampaigns) {
+    const claimedCampaign = await claimCampaignForSend(campaign.id)
+
+    if (claimedCampaign) {
+      queueCampaignSendProcessing(claimedCampaign.id)
+    }
   }
 }
 
@@ -245,7 +361,7 @@ export const listCampaigns = async (userId: string, query: CampaignListQuery) =>
   const { count, rows } = await Campaign.findAndCountAll({
     limit: query.limit,
     offset,
-    order: [['createdAt', 'DESC']],
+    order: toCampaignOrder(query.sortBy, query.sortOrder),
     where
   })
 
@@ -400,21 +516,21 @@ export const scheduleCampaign = async (campaignId: string, userId: string, sched
 }
 
 export const sendCampaign = async (campaignId: string, userId: string) => {
-  const campaign = await findCampaignOrThrow(campaignId, userId)
+  const claimedCampaign = await claimCampaignForSend(campaignId, {
+    createdBy: userId
+  })
 
-  if (campaign.status === 'sending' || campaign.status === 'sent') {
+  if (!claimedCampaign) {
+    const campaign = await findCampaignOrThrow(campaignId, userId)
+
+    if (campaign.status === 'sending' || campaign.status === 'sent') {
+      throw new AppError(409, CAMPAIGN_MESSAGES.alreadySendingOrSent)
+    }
+
     throw new AppError(409, CAMPAIGN_MESSAGES.alreadySendingOrSent)
   }
 
-  await campaign.update({
-    scheduledAt: null,
-    status: 'sending',
-    updatedAt: new Date()
-  })
-
-  setImmediate(() => {
-    void processCampaignSend(campaign.id)
-  })
+  queueCampaignSendProcessing(claimedCampaign.id)
 
   return {
     message: CAMPAIGN_MESSAGES.sendStarted

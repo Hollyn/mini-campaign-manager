@@ -21,6 +21,7 @@ export const login = async (request: Request, response: Response, next: NextFunc
 
     response.status(200).json(
       authResponseSchema.parse({
+        token: session.token,
         user: session.user
       })
     )
@@ -43,6 +44,7 @@ export const register = async (request: Request, response: Response, next: NextF
 
     response.status(201).json(
       authResponseSchema.parse({
+        token: session.token,
         user: session.user
       })
     )

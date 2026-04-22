@@ -26,7 +26,7 @@ interface CampaignRecipientStatusBadgeProps {
 export const CampaignRecipientStatusBadge = ({ status }: CampaignRecipientStatusBadgeProps) => (
   <span
     className={cn(
-      'inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.72rem] font-medium uppercase tracking-[0.24em]',
+      'inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.72rem] font-medium',
       RECIPIENT_STATUS_STYLES[status]
     )}
   >

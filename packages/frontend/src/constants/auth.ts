@@ -17,22 +17,16 @@ export const AUTH_COPY = {
     eyebrow: 'Session bootstrap',
     title: 'Workspace session unavailable'
   },
+  eyebrow: 'Mini Campaign Manager',
   genericError: 'Something went wrong. Please try again.',
-  hero: {
-    badge: 'Precision Editor',
-    intro:
-      'Secure session, typed auth contract, and guarded routes now shape campaign workspace before campaign tools arrive.',
-    items: ['HTTP-only JWT cookie', 'Session restore on refresh', 'Editorial auth screens'] as const,
-    title: 'Enter workspace built for deliberate campaign work.'
-  },
   login: {
-    alternateActionLabel: 'Request access',
-    alternatePrompt: 'New to platform?',
-    description: 'Enter credentials to continue to workspace.',
-    footerHint: 'Your session stays active while secure cookie remains valid.',
-    pendingLabel: 'Authenticating...',
-    submitLabel: 'Authenticate',
-    title: 'Access Editor'
+    alternateActionLabel: 'Create account',
+    alternatePrompt: 'Need a fresh workspace?',
+    description: 'Step back into your campaigns without fighting the interface.',
+    footerHint: 'Draft. Schedule. Send.',
+    pendingLabel: 'Logging in...',
+    submitLabel: 'Log in',
+    title: 'Back to the control room'
   },
   logout: {
     label: 'Sign out',
@@ -40,12 +34,12 @@ export const AUTH_COPY = {
   },
   register: {
     alternateActionLabel: 'Back to login',
-    alternatePrompt: 'Already have access?',
-    description: 'Create account to begin drafting and scheduling campaigns.',
-    footerHint: 'Registration signs you in immediately with secure session cookie.',
+    alternatePrompt: 'Already inside?',
+    description: 'Open a clean workspace for campaigns that feel deliberate from first draft to final send.',
+    footerHint: 'Less clutter. More signal.',
     pendingLabel: 'Creating account...',
     submitLabel: 'Create account',
-    title: 'Request Workspace'
+    title: 'Start with a clear desk'
   },
   workspace: {
     badges: ['Session ready', 'Guarded routes', 'Auth phase complete'] as const,
@@ -63,39 +57,39 @@ export const AUTH_FORM_FIELDS = {
   login: [
     {
       autoComplete: 'email',
-      label: 'Email Address',
+      label: 'Email',
       name: 'email',
-      placeholder: 'name@example.com',
+      placeholder: 'Email',
       type: 'email'
     },
     {
       autoComplete: 'current-password',
       label: 'Password',
       name: 'password',
-      placeholder: 'Enter your password',
+      placeholder: 'Password',
       type: 'password'
     }
   ],
   register: [
     {
       autoComplete: 'name',
-      label: 'Full Name',
+      label: 'Full name',
       name: 'name',
-      placeholder: 'Alex Curator',
+      placeholder: 'Full name',
       type: 'text'
     },
     {
       autoComplete: 'email',
-      label: 'Email Address',
+      label: 'Email',
       name: 'email',
-      placeholder: 'name@example.com',
+      placeholder: 'Email',
       type: 'email'
     },
     {
       autoComplete: 'new-password',
       label: 'Password',
       name: 'password',
-      placeholder: 'Create a secure password',
+      placeholder: 'Password',
       type: 'password'
     }
   ]

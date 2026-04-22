@@ -1,13 +1,14 @@
 import { useParams } from 'react-router-dom'
 
-import { CampaignDetailHeader } from '../components/campaigns/campaign-detail-header'
+import { CampaignDetailActionsBar } from '../components/campaigns/campaign-detail-actions-bar'
+import { CampaignDetailInfoPanel } from '../components/campaigns/campaign-detail-info-panel'
+import { CampaignDetailMessagePanel } from '../components/campaigns/campaign-detail-message-panel'
 import { CampaignDetailSkeleton } from '../components/campaigns/campaign-detail-skeleton'
 import { CampaignRecipientsTable } from '../components/campaigns/campaign-recipients-table'
 import { CampaignStatsPanel } from '../components/campaigns/campaign-stats-panel'
 import { DeleteCampaignModal } from '../components/campaigns/delete-campaign-modal'
 import { ScheduleCampaignModal } from '../components/campaigns/schedule-campaign-modal'
 import { Alert } from '../components/ui/alert'
-import { Card } from '../components/ui/card'
 import { CAMPAIGN_COPY } from '../constants/campaigns'
 import { useCampaignDetailPage } from '../hooks/use-campaign-detail-page'
 
@@ -24,16 +25,15 @@ export const CampaignDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
-
-      <CampaignDetailHeader
+    <div className="space-y-4">
+      <CampaignDetailActionsBar
+        canEdit={page.canEdit}
         canDelete={page.canDelete}
         canSchedule={page.canSchedule}
         canSend={page.canSend}
-        campaign={page.campaign}
         isSending={page.isSending}
         onBack={page.onBack}
+        onEdit={page.onEdit}
         onDelete={page.openDeleteModal}
         onSchedule={page.openScheduleModal}
         onSend={page.handleSend}
@@ -41,14 +41,43 @@ export const CampaignDetailPage = () => {
         status={page.status}
       />
 
+      {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
+
       <CampaignStatsPanel stats={page.stats} />
 
-      <Card className="rounded-[1.75rem] border border-white/70 bg-surface-container-lowest/95 p-6 sm:p-7">
-        <p className="text-[0.72rem] uppercase tracking-[0.24em] text-on-surface-variant">{CAMPAIGN_COPY.detail.bodyLabel}</p>
-        <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-on-surface-variant">{page.campaign.body}</div>
-      </Card>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.9fr)] xl:items-start">
+        <CampaignDetailMessagePanel
+          html={page.campaign.body}
+          isExpanded={page.isBodyExpanded}
+          onToggle={page.toggleBodyExpanded}
+        />
 
-      <CampaignRecipientsTable recipients={page.recipients} />
+        <CampaignDetailInfoPanel
+          campaign={page.campaign}
+          recipientSummary={CAMPAIGN_COPY.detail.recipientSummary(page.totalRecipients)}
+        />
+      </div>
+
+      <CampaignRecipientsTable
+        activeFilter={page.recipientFilter}
+        filterOptions={page.recipientFilterOptions}
+        isRefetching={page.isRefetching}
+        onFilterChange={page.handleRecipientFilterChange}
+        onNextPage={page.handleRecipientNextPage}
+        onPageChange={page.handleRecipientPageChange}
+        onPageSizeChange={page.handleRecipientPageSizeChange}
+        onPreviousPage={page.handleRecipientPreviousPage}
+        onSearchChange={page.handleRecipientSearchChange}
+        onSortChange={page.handleRecipientSortChange}
+        pageSize={page.recipientPageSize}
+        pagination={page.recipientPagination}
+        recipients={page.recipients}
+        search={page.recipientSearch}
+        sortBy={page.recipientSortBy}
+        sortDirection={page.recipientSortDirection}
+        totalRecipients={page.totalRecipients}
+        visibleRecipientCount={page.visibleRecipientCount}
+      />
 
       <DeleteCampaignModal
         campaign={page.campaign}

@@ -1,4 +1,4 @@
-import { CampaignStats, CampaignStatus } from '../api/types'
+import { Campaign, CampaignStats, CampaignStatus } from '../api/types'
 import { CAMPAIGN_COPY } from '../constants/campaigns'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -39,8 +39,15 @@ export const formatCampaignCount = (value: number) => numberFormatter.format(val
 
 export const getCampaignStatusLabel = (status: CampaignStatus) => CAMPAIGN_COPY.statusLabels[status]
 
+export const getCampaignDetailMetaItems = (campaign: Campaign) => [
+  { label: CAMPAIGN_COPY.detail.fields.created, value: formatCampaignDate(campaign.createdAt) },
+  { label: CAMPAIGN_COPY.detail.fields.updated, value: formatCampaignDate(campaign.updatedAt) },
+  { label: CAMPAIGN_COPY.detail.fields.scheduled, value: formatCampaignDateTime(campaign.scheduledAt) }
+]
+
 export const getCampaignStatCards = (stats: CampaignStats) => [
-  { label: CAMPAIGN_COPY.stats.recipients, value: formatCampaignCount(stats.total) },
+  { label: CAMPAIGN_COPY.stats.total, value: formatCampaignCount(stats.total) },
+  { label: CAMPAIGN_COPY.stats.received, value: formatCampaignCount(Math.min(stats.total, stats.sent + stats.failed)) },
   { label: CAMPAIGN_COPY.stats.sent, value: formatCampaignCount(stats.sent) },
   { label: CAMPAIGN_COPY.stats.failed, value: formatCampaignCount(stats.failed) },
   { label: CAMPAIGN_COPY.stats.opened, value: formatCampaignCount(stats.opened) }

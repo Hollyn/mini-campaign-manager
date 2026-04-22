@@ -1,17 +1,24 @@
 import { Router } from 'express'
 
+import { sequelize } from '../config/database'
 import { healthResponseSchema } from '../validations/health'
 
 const router = Router()
 
-router.get('/', (_req, res) => {
-  const payload = healthResponseSchema.parse({
-    service: 'api',
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  })
+router.get('/', async (_req, res, next) => {
+  try {
+    await sequelize.query('SELECT 1')
 
-  res.status(200).json(payload)
+    const payload = healthResponseSchema.parse({
+      service: 'api',
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    })
+
+    res.status(200).json(payload)
+  } catch (error) {
+    next(error)
+  }
 })
 
 export { router as healthRouter }

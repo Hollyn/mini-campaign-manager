@@ -11,6 +11,8 @@ RUN corepack enable && yarn install --non-interactive
 
 COPY . .
 
+RUN yarn workspace @campaign/api build
+
 EXPOSE 4000
 
-CMD ["yarn", "workspace", "@campaign/api", "start:docker"]
+CMD ["yarn", "workspace", "@campaign/api", "start"]

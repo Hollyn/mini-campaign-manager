@@ -1,12 +1,15 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
 
 import { Recipient } from '../api/types'
-import { EMPTY_RECIPIENT_FORM_VALUES, RECIPIENT_COPY } from '../constants/recipients'
+import { DATA_TABLE_PAGE_SIZE_OPTIONS, DATA_TABLE_SEARCH_DEBOUNCE_MS } from '../constants/datatable'
+import { EMPTY_RECIPIENT_FORM_VALUES, RECIPIENT_COPY, RECIPIENT_DEFAULT_SORT } from '../constants/recipients'
+import { toggleSort } from '../lib/data-table'
+import { getRequestErrorMessage } from '../lib/request-error'
+import { useDebouncedValue } from './use-debounced-value'
 import { useCreateRecipient } from './use-create-recipient'
 import { useDeleteRecipient } from './use-delete-recipient'
 import { useRecipients } from './use-recipients'
 import { useUpdateRecipient } from './use-update-recipient'
-import { getRequestErrorMessage } from '../lib/request-error'
 
 type FormMode = 'create' | 'edit'
 
@@ -22,8 +25,13 @@ export const useRecipientsPage = () => {
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formValues, setFormValues] = useState(EMPTY_RECIPIENT_FORM_VALUES)
+  const [pageSize, setPageSize] = useState<number>(DATA_TABLE_PAGE_SIZE_OPTIONS[0])
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<typeof RECIPIENT_DEFAULT_SORT.field>(RECIPIENT_DEFAULT_SORT.field)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(RECIPIENT_DEFAULT_SORT.direction)
+  const debouncedSearch = useDebouncedValue(search, DATA_TABLE_SEARCH_DEBOUNCE_MS)
 
-  const recipientsQuery = useRecipients(activePage)
+  const recipientsQuery = useRecipients(activePage, pageSize, debouncedSearch, sortBy, sortDirection)
 
   const createMutation = useCreateRecipient({
     onSuccess: async () => {
@@ -129,6 +137,34 @@ export const useRecipientsPage = () => {
     setActivePage((currentPage) => (currentPage <= 1 ? currentPage : currentPage - 1))
   }
 
+  const handlePageChange = (page: number) => {
+    const totalPages = recipientsQuery.data?.pagination.totalPages ?? 0
+
+    if (totalPages === 0) {
+      setActivePage(1)
+      return
+    }
+
+    setActivePage(Math.min(Math.max(page, 1), totalPages))
+  }
+
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value)
+    setActivePage(1)
+  }
+
+  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setPageSize(Number(event.target.value))
+    setActivePage(1)
+  }
+
+  const handleSortChange = (nextSortBy: typeof sortBy) => {
+    const nextSort = toggleSort(sortBy, sortDirection, nextSortBy)
+    setSortBy(nextSort.field)
+    setSortDirection(nextSort.direction)
+    setActivePage(1)
+  }
+
   const pageErrorMessage = useMemo(() => {
     if (!recipientsQuery.error) {
       return null
@@ -160,7 +196,6 @@ export const useRecipientsPage = () => {
   const recipients = recipientsQuery.data?.recipients ?? []
 
   return {
-    activePage,
     deleteCandidate,
     deleteErrorMessage,
     formErrorMessage,
@@ -170,7 +205,11 @@ export const useRecipientsPage = () => {
     handleFormChange,
     handleFormSubmit,
     handleNextPage,
+    handlePageChange,
+    handlePageSizeChange,
     handlePreviousPage,
+    handleSearchChange,
+    handleSortChange,
     isDeleteOpen: Boolean(deleteCandidate),
     isDeleting: deleteMutation.isPending,
     isFormOpen,
@@ -181,9 +220,12 @@ export const useRecipientsPage = () => {
     openDeleteModal,
     openEditModal,
     pageErrorMessage,
+    pageSize,
     pagination,
     recipients,
-    selectedRecipient: activeRecipient,
+    search,
+    sortBy,
+    sortDirection,
     totalRecipients: pagination?.total ?? 0,
     closeDeleteModal,
     closeForm

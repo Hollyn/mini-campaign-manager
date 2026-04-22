@@ -19,10 +19,15 @@ const recipientIdSchema = z.object({
   id: z.string().uuid('Recipient id must be a valid UUID')
 })
 
+const sortOrderSchema = z.enum(['asc', 'desc'])
+const recipientListSortBySchema = z.enum(['email', 'name'])
+
 const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(RECIPIENT_PAGINATION.maxLimit).default(RECIPIENT_PAGINATION.defaultLimit),
   page: z.coerce.number().int().min(RECIPIENT_PAGINATION.minPage).default(RECIPIENT_PAGINATION.minPage),
-  search: z.string().trim().max(255, 'Search must be at most 255 characters').optional().default('')
+  search: z.string().trim().max(255, 'Search must be at most 255 characters').optional().default(''),
+  sortBy: recipientListSortBySchema.default('name'),
+  sortOrder: sortOrderSchema.default('asc')
 })
 
 export const recipientSchema = z.object({
@@ -61,6 +66,8 @@ export type CreateRecipientRequest = z.infer<typeof createRecipientRequestSchema
 export type Recipient = z.infer<typeof recipientSchema>
 export type RecipientListQuery = z.infer<typeof recipientListQuerySchema>
 export type RecipientListResponse = z.infer<typeof recipientListResponseSchema>
+export type RecipientListSortBy = z.infer<typeof recipientListSortBySchema>
 export type RecipientParams = z.infer<typeof recipientParamsSchema>
 export type RecipientResponse = z.infer<typeof recipientResponseSchema>
+export type SortOrder = z.infer<typeof sortOrderSchema>
 export type UpdateRecipientRequest = z.infer<typeof updateRecipientRequestSchema>

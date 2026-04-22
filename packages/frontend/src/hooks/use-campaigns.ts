@@ -1,19 +1,28 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { getCampaigns } from '../api/campaigns'
-import { CampaignStatus } from '../api/types'
-import { CAMPAIGN_PAGE_SIZE, CAMPAIGN_QUERY_KEYS } from '../constants/campaigns'
+import { CampaignListSortBy, CampaignStatus, SortDirection } from '../api/types'
+import { CAMPAIGN_QUERY_KEYS } from '../constants/campaigns'
 
-export const useCampaigns = (page: number, search: string, status?: CampaignStatus) =>
+export const useCampaigns = (
+  page: number,
+  limit: number,
+  search: string,
+  sortBy: CampaignListSortBy,
+  sortDirection: SortDirection,
+  status?: CampaignStatus
+) =>
   useQuery({
     placeholderData: keepPreviousData,
     queryFn: () =>
       getCampaigns({
-        limit: CAMPAIGN_PAGE_SIZE,
+        limit,
         page,
         search,
+        sortBy,
+        sortOrder: sortDirection,
         status
       }),
-    queryKey: CAMPAIGN_QUERY_KEYS.list(page, search, status),
+    queryKey: CAMPAIGN_QUERY_KEYS.list(page, limit, search, sortBy, sortDirection, status),
     staleTime: 30 * 1000
   })

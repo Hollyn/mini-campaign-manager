@@ -112,6 +112,13 @@ export const useCampaignFormPage = (campaignId?: string) => {
     }))
   }
 
+  const handleBodyChange = (value: string) => {
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      body: value
+    }))
+  }
+
   const handleRecipientSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setRecipientSearch(event.target.value)
   }
@@ -153,6 +160,7 @@ export const useCampaignFormPage = (campaignId?: string) => {
 
   return {
     campaignName: campaignQuery.data?.campaign.name ?? '',
+    handleBodyChange,
     formErrorMessage,
     formValues,
     handleFieldChange,
