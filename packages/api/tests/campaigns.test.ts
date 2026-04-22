@@ -60,6 +60,16 @@ const createRecipients = async () =>
     )
   )
 
+const attachRecipientsToCampaign = async (campaignId: string, recipients: Recipient[]) => {
+  await CampaignRecipient.bulkCreate(
+    recipients.map((recipient) => ({
+      campaignId,
+      recipientId: recipient.id,
+      status: 'pending' as const
+    }))
+  )
+}
+
 const createAuthenticatedAgent = async () => {
   const agent = request.agent(app)
 
@@ -145,6 +155,32 @@ describe('campaign routes', () => {
 
   it('POST /api/campaigns/:id/schedule with a past scheduled_at returns 422', async () => {
     const user = await createUser()
+    const recipients = await createRecipients()
+    const campaign = await Campaign.create({
+      body: 'Body',
+      createdAt: new Date(),
+      createdBy: user.id,
+      name: 'Draft campaign',
+      scheduledAt: null,
+      status: 'draft',
+      subject: 'Subject',
+      updatedAt: new Date()
+    })
+
+    await attachRecipientsToCampaign(campaign.id, recipients)
+
+    const agent = await createAuthenticatedAgent()
+
+    const response = await agent.post(`/api/campaigns/${campaign.id}/schedule`).send({
+      scheduled_at: new Date(Date.now() - 60_000).toISOString()
+    })
+
+    expect(response.status).toBe(422)
+    expect(response.body.error).toBe('Scheduled time must be in the future')
+  })
+
+  it('POST /api/campaigns/:id/schedule without recipients returns 422', async () => {
+    const user = await createUser()
     const campaign = await Campaign.create({
       body: 'Body',
       createdAt: new Date(),
@@ -158,11 +194,11 @@ describe('campaign routes', () => {
     const agent = await createAuthenticatedAgent()
 
     const response = await agent.post(`/api/campaigns/${campaign.id}/schedule`).send({
-      scheduled_at: new Date(Date.now() - 60_000).toISOString()
+      scheduled_at: new Date(Date.now() + 60_000).toISOString()
     })
 
     expect(response.status).toBe(422)
-    expect(response.body.error).toBe('Scheduled time must be in the future')
+    expect(response.body.error).toBe('Select at least one recipient before scheduling or sending')
   })
 
   it('GET /api/campaigns sorts by name when requested', async () => {
@@ -218,13 +254,7 @@ describe('campaign routes', () => {
       updatedAt: new Date()
     })
 
-    await CampaignRecipient.bulkCreate(
-      recipients.map((recipient) => ({
-        campaignId: campaign.id,
-        recipientId: recipient.id,
-        status: 'pending' as const
-      }))
-    )
+    await attachRecipientsToCampaign(campaign.id, recipients)
 
     const agent = await createAuthenticatedAgent()
     const response = await agent.post(`/api/campaigns/${campaign.id}/send`).send()
@@ -256,6 +286,26 @@ describe('campaign routes', () => {
     expect(detailResponse.body.stats.open_rate).toBe(expectedOpenRate)
   })
 
+  it('POST /api/campaigns/:id/send without recipients returns 422', async () => {
+    const user = await createUser()
+    const campaign = await Campaign.create({
+      body: 'Body',
+      createdAt: new Date(),
+      createdBy: user.id,
+      name: 'Draft campaign',
+      scheduledAt: null,
+      status: 'draft',
+      subject: 'Subject',
+      updatedAt: new Date()
+    })
+    const agent = await createAuthenticatedAgent()
+
+    const response = await agent.post(`/api/campaigns/${campaign.id}/send`).send()
+
+    expect(response.status).toBe(422)
+    expect(response.body.error).toBe('Select at least one recipient before scheduling or sending')
+  })
+
   it('scheduled campaign sweep sends due scheduled campaigns', async () => {
     const user = await createUser()
     const recipients = await createRecipients()
@@ -270,13 +320,7 @@ describe('campaign routes', () => {
       updatedAt: new Date()
     })
 
-    await CampaignRecipient.bulkCreate(
-      recipients.map((recipient) => ({
-        campaignId: campaign.id,
-        recipientId: recipient.id,
-        status: 'pending' as const
-      }))
-    )
+    await attachRecipientsToCampaign(campaign.id, recipients)
 
     await runScheduledCampaignSweep()
     await waitForCampaignToBeSent(campaign.id)
@@ -301,13 +345,7 @@ describe('campaign routes', () => {
       updatedAt: new Date()
     })
 
-    await CampaignRecipient.bulkCreate(
-      recipients.map((recipient) => ({
-        campaignId: campaign.id,
-        recipientId: recipient.id,
-        status: 'pending' as const
-      }))
-    )
+    await attachRecipientsToCampaign(campaign.id, recipients)
 
     await recoverSendingCampaigns()
     await waitForCampaignToBeSent(campaign.id)

@@ -27,14 +27,18 @@ export const CampaignDetailPage = () => {
   return (
     <div className="space-y-4">
       <CampaignDetailActionsBar
+        canEdit={page.canEdit}
         campaignName={page.campaign.name}
         campaignSubject={page.campaign.subject}
         canDelete={page.canDelete}
         canSchedule={page.canSchedule}
         canSend={page.canSend}
+        deliveryValidationMessage={page.deliveryValidationMessage}
+        hasRecipients={page.hasRecipients}
         isSending={page.isSending}
         onBack={page.onBack}
         onDelete={page.openDeleteModal}
+        onEdit={page.onEdit}
         onSchedule={page.openScheduleModal}
         onSend={page.handleSend}
         sendErrorMessage={page.sendErrorMessage}

@@ -4,6 +4,7 @@ export const CAMPAIGN_MESSAGES = {
   draftOnlyEdit: 'Only draft campaigns can be edited',
   draftOnlySchedule: 'Only draft campaigns can be scheduled',
   notFound: 'Campaign not found',
+  recipientsRequired: 'Select at least one recipient before scheduling or sending',
   recipientsMissing: 'One or more recipients were not found',
   scheduleMustBeFuture: 'Scheduled time must be in the future',
   sendStarted: 'Send started'

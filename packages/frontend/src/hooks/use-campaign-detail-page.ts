@@ -12,6 +12,7 @@ import {
 import { DATA_TABLE_PAGE_SIZE_OPTIONS } from '../constants/datatable'
 import { createPaginationMeta, toggleSort } from '../lib/data-table'
 import { getRequestErrorMessage } from '../lib/request-error'
+import { pushToast } from '../store/toast-store'
 import { useCampaign } from './use-campaign'
 import { useDeleteCampaign } from './use-delete-campaign'
 import { useScheduleCampaign } from './use-schedule-campaign'
@@ -39,6 +40,13 @@ const toActionState = (status: CampaignStatus, isSendStarting: boolean): Campaig
 }
 
 const compareText = (left: string, right: string) => left.localeCompare(right, undefined, { sensitivity: 'base' })
+
+const notifyRecipientsRequired = () => {
+  pushToast({
+    description: CAMPAIGN_COPY.notifications.recipientsRequiredDescription,
+    title: CAMPAIGN_COPY.notifications.recipientsRequiredTitle
+  })
+}
 
 const compareDateTime = (left: string | null, right: string | null) => {
   if (!left && !right) {
@@ -112,6 +120,7 @@ export const useCampaignDetailPage = (campaignId: string) => {
   const [minScheduleValue, setMinScheduleValue] = useState(getCurrentDateTimeLocalValue())
   const [scheduleValue, setScheduleValue] = useState('')
   const [scheduleClientError, setScheduleClientError] = useState<string | null>(null)
+  const [sendClientError, setSendClientError] = useState<string | null>(null)
   const [recipientPage, setRecipientPage] = useState(1)
   const [recipientPageSize, setRecipientPageSize] = useState<number>(DATA_TABLE_PAGE_SIZE_OPTIONS[0])
   const [recipientFilter, setRecipientFilter] = useState<CampaignRecipientActivityFilter>('all')
@@ -177,15 +186,39 @@ export const useCampaignDetailPage = (campaignId: string) => {
     return getRequestErrorMessage(scheduleMutation.error, CAMPAIGN_COPY.errors.generic)
   }, [scheduleClientError, scheduleMutation.error])
 
+  const recipientSource = campaignQuery.data?.recipients ?? []
+  const hasRecipients = recipientSource.length > 0
+
+  useEffect(() => {
+    if (hasRecipients) {
+      setScheduleClientError((currentError) =>
+        currentError === CAMPAIGN_COPY.errors.recipientsRequired ? null : currentError
+      )
+      setSendClientError((currentError) =>
+        currentError === CAMPAIGN_COPY.errors.recipientsRequired ? null : currentError
+      )
+    }
+  }, [hasRecipients])
+
   const sendErrorMessage = useMemo(() => {
+    if (sendClientError) {
+      return sendClientError
+    }
+
     if (!sendMutation.error) {
       return null
     }
 
     return getRequestErrorMessage(sendMutation.error, CAMPAIGN_COPY.errors.generic)
-  }, [sendMutation.error])
+  }, [sendClientError, sendMutation.error])
 
-  const recipientSource = campaignQuery.data?.recipients ?? []
+  const deliveryValidationMessage = useMemo(() => {
+    if (!hasRecipients && (actionState === 'draft' || actionState === 'scheduled')) {
+      return CAMPAIGN_COPY.helper.deliveryRecipientsRequired
+    }
+
+    return null
+  }, [actionState, hasRecipients])
 
   const recipientFilterOptions = useMemo(
     () => [
@@ -270,6 +303,12 @@ export const useCampaignDetailPage = (campaignId: string) => {
   }
 
   const openScheduleModal = () => {
+    if (!hasRecipients) {
+      setScheduleClientError(CAMPAIGN_COPY.errors.recipientsRequired)
+      notifyRecipientsRequired()
+      return
+    }
+
     scheduleMutation.reset()
     setScheduleClientError(null)
     setMinScheduleValue(getCurrentDateTimeLocalValue())
@@ -279,6 +318,12 @@ export const useCampaignDetailPage = (campaignId: string) => {
 
   const handleScheduleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (!hasRecipients) {
+      setScheduleClientError(CAMPAIGN_COPY.errors.recipientsRequired)
+      notifyRecipientsRequired()
+      return
+    }
 
     if (!scheduleValue) {
       setScheduleClientError(CAMPAIGN_COPY.errors.invalidSchedule)
@@ -306,7 +351,14 @@ export const useCampaignDetailPage = (campaignId: string) => {
       return
     }
 
+    if (!hasRecipients) {
+      setSendClientError(CAMPAIGN_COPY.errors.recipientsRequired)
+      notifyRecipientsRequired()
+      return
+    }
+
     sendMutation.reset()
+    setSendClientError(null)
     setIsSendStarting(true)
     sendMutation.mutate(campaignId)
   }
@@ -363,6 +415,7 @@ export const useCampaignDetailPage = (campaignId: string) => {
     closeDeleteModal: () => setIsDeleteOpen(false),
     closeScheduleModal: () => setIsScheduleOpen(false),
     deleteErrorMessage,
+    deliveryValidationMessage,
     handleDeleteConfirm: () => deleteMutation.mutate(campaignId),
     handleRecipientNextPage,
     handleRecipientFilterChange,
@@ -374,6 +427,7 @@ export const useCampaignDetailPage = (campaignId: string) => {
     handleScheduleChange: (value: string) => setScheduleValue(value),
     handleScheduleSubmit,
     handleSend,
+    hasRecipients,
     isBodyExpanded,
     isDeleteOpen,
     isDeleting: deleteMutation.isPending,

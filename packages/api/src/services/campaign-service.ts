@@ -198,6 +198,18 @@ const syncCampaignRecipients = async (
   }
 }
 
+const ensureCampaignHasRecipients = async (campaignId: string) => {
+  const recipientCount = await CampaignRecipient.count({
+    where: {
+      campaignId
+    }
+  })
+
+  if (recipientCount === 0) {
+    throw new AppError(422, CAMPAIGN_MESSAGES.recipientsRequired)
+  }
+}
+
 const getCampaignRecipients = async (campaignId: string) => {
   const campaignRecipients = await CampaignRecipient.findAll({
     include: [
@@ -501,6 +513,7 @@ export const scheduleCampaign = async (campaignId: string, userId: string, sched
   const campaign = await findCampaignOrThrow(campaignId, userId)
 
   ensureDraftCampaign(campaign, CAMPAIGN_MESSAGES.draftOnlySchedule)
+  await ensureCampaignHasRecipients(campaignId)
 
   if (scheduledAt.getTime() <= Date.now()) {
     throw new AppError(422, CAMPAIGN_MESSAGES.scheduleMustBeFuture)
@@ -516,14 +529,22 @@ export const scheduleCampaign = async (campaignId: string, userId: string, sched
 }
 
 export const sendCampaign = async (campaignId: string, userId: string) => {
+  const campaign = await findCampaignOrThrow(campaignId, userId)
+
+  if (campaign.status === 'sending' || campaign.status === 'sent') {
+    throw new AppError(409, CAMPAIGN_MESSAGES.alreadySendingOrSent)
+  }
+
+  await ensureCampaignHasRecipients(campaignId)
+
   const claimedCampaign = await claimCampaignForSend(campaignId, {
     createdBy: userId
   })
 
   if (!claimedCampaign) {
-    const campaign = await findCampaignOrThrow(campaignId, userId)
+    const refreshedCampaign = await findCampaignOrThrow(campaignId, userId)
 
-    if (campaign.status === 'sending' || campaign.status === 'sent') {
+    if (refreshedCampaign.status === 'sending' || refreshedCampaign.status === 'sent') {
       throw new AppError(409, CAMPAIGN_MESSAGES.alreadySendingOrSent)
     }
 

@@ -85,7 +85,8 @@ export const CAMPAIGN_COPY = {
   },
   errors: {
     generic: 'Something went wrong. Please try again.',
-    invalidSchedule: 'Choose a future date and time.'
+    invalidSchedule: 'Choose a future date and time.',
+    recipientsRequired: 'Select at least one recipient before scheduling or sending.'
   },
   form: {
     bodyPaneTitle: 'Body',
@@ -128,6 +129,7 @@ export const CAMPAIGN_COPY = {
     subject: 'Subject'
   },
   helper: {
+    deliveryRecipientsRequired: 'Add at least one recipient before scheduling or sending this campaign.',
     emptyRecipients: 'No recipients attached yet.',
     pagination: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} campaigns`,
     recipientPagination: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} recipients`,
@@ -138,6 +140,10 @@ export const CAMPAIGN_COPY = {
     sortByLabel: 'Sort by',
     searchLabel: 'Search campaigns',
     searchPlaceholder: 'Search by name or subject'
+  },
+  notifications: {
+    recipientsRequiredDescription: 'Add at least one recipient before scheduling or sending this campaign.',
+    recipientsRequiredTitle: 'Recipients required'
   },
   stats: {
     failed: 'Failed',
