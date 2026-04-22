@@ -15,6 +15,8 @@ export const AUTH_COPY = {
     cta: 'Retry session check',
     description: 'Connection to workspace could not be confirmed. Retry session check to continue.',
     eyebrow: 'Session bootstrap',
+    loadingDescription: 'Reconnecting to your workspace session and preparing guarded routes.',
+    loadingTitle: 'Restoring workspace session',
     title: 'Workspace session unavailable'
   },
   eyebrow: 'Mini Campaign Manager',

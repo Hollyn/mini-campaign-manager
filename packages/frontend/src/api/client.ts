@@ -44,7 +44,7 @@ export const apiRequest = async <T>(path: string, init?: RequestInit) => {
 
   const response = await fetch(`${API_BASE_PATH}${path}`, {
     ...init,
-    credentials: 'omit',
+    credentials: 'include',
     headers
   })
 

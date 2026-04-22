@@ -1,12 +1,12 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
 import { register } from '../api/auth'
 import { ApiRequestError } from '../api/client'
 import { RegisterRequest } from '../api/types'
-import { AUTH_COPY, AUTH_ROUTES } from '../constants/auth'
+import { AUTH_COPY, AUTH_QUERY_KEYS, AUTH_ROUTES } from '../constants/auth'
 import { useAuthStore } from '../store/auth-store'
 
 const initialValues: RegisterRequest = {
@@ -17,12 +17,16 @@ const initialValues: RegisterRequest = {
 
 export const useRegister = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const setAuth = useAuthStore((state) => state.setAuth)
   const [values, setValues] = useState<RegisterRequest>(initialValues)
 
   const mutation = useMutation({
     mutationFn: register,
     onSuccess: (response) => {
+      queryClient.setQueryData(AUTH_QUERY_KEYS.session, {
+        user: response.user
+      })
       setAuth(response.token, response.user)
       navigate(AUTH_ROUTES.campaigns, { replace: true })
     }
