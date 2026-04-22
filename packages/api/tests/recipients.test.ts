@@ -150,4 +150,17 @@ describe('recipient routes', () => {
     expect(response.status).toBe(201)
     expect(response.body.recipient.email).toBe('local-origin@example.com')
   })
+
+  it('POST /api/recipient supports singular create endpoint alias', async () => {
+    await createUser()
+    const agent = await createAuthenticatedAgent()
+
+    const response = await agent.post('/api/recipient').send({
+      email: 'alias@example.com',
+      name: 'Alias Route'
+    })
+
+    expect(response.status).toBe(201)
+    expect(response.body.recipient.email).toBe('alias@example.com')
+  })
 })

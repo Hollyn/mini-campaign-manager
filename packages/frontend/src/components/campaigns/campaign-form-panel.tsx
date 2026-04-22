@@ -16,15 +16,32 @@ interface RecipientOption {
   name: string
 }
 
+interface CreateRecipientCandidate {
+  email: string
+  name: string
+}
+
+interface CampaignFormFieldErrors {
+  body?: string
+  name?: string
+  recipientIds?: string
+  subject?: string
+}
+
 interface CampaignFormPanelProps {
+  createRecipientCandidate: CreateRecipientCandidate | null
+  createRecipientErrorMessage: string | null
   errorMessage: string | null
+  fieldErrors: CampaignFormFieldErrors
   formValues: CreateCampaignRequest
+  isCreatingRecipient: boolean
   isReadonly: boolean
   isRecipientOptionsLoading: boolean
   isSubmitting: boolean
   mode: 'create' | 'edit'
   onBack: () => void
   onBodyChange: (value: string) => void
+  onCreateRecipient: () => void
   onFieldChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   onRecipientSearchChange: (event: ChangeEvent<HTMLInputElement>) => void
   onRecipientToggle: (recipient: RecipientOption) => void
@@ -35,14 +52,19 @@ interface CampaignFormPanelProps {
 }
 
 export const CampaignFormPanel = ({
+  createRecipientCandidate,
+  createRecipientErrorMessage,
   errorMessage,
+  fieldErrors,
   formValues,
+  isCreatingRecipient,
   isReadonly,
   isRecipientOptionsLoading,
   isSubmitting,
   mode,
   onBack,
   onBodyChange,
+  onCreateRecipient,
   onFieldChange,
   onRecipientSearchChange,
   onRecipientToggle,
@@ -72,6 +94,7 @@ export const CampaignFormPanel = ({
                 <div className="space-y-2">
                   <Label htmlFor={campaignNameField.name}>{campaignNameField.label}</Label>
                   <Input
+                    aria-invalid={Boolean(fieldErrors.name)}
                     autoComplete={campaignNameField.autoComplete}
                     disabled={isReadonly}
                     id={campaignNameField.name}
@@ -81,6 +104,7 @@ export const CampaignFormPanel = ({
                     type={campaignNameField.type}
                     value={formValues[campaignNameField.name]}
                   />
+                  {fieldErrors.name ? <p className="text-sm text-red-700">{fieldErrors.name}</p> : null}
                 </div>
               </div>
             </Card>
@@ -94,6 +118,7 @@ export const CampaignFormPanel = ({
                 <div className="space-y-2">
                   <Label htmlFor={campaignSubjectField.name}>{campaignSubjectField.label}</Label>
                   <Input
+                    aria-invalid={Boolean(fieldErrors.subject)}
                     autoComplete={campaignSubjectField.autoComplete}
                     disabled={isReadonly}
                     id={campaignSubjectField.name}
@@ -103,6 +128,7 @@ export const CampaignFormPanel = ({
                     type={campaignSubjectField.type}
                     value={formValues[campaignSubjectField.name]}
                   />
+                  {fieldErrors.subject ? <p className="text-sm text-red-700">{fieldErrors.subject}</p> : null}
                 </div>
 
                 <div className="space-y-2">
@@ -123,6 +149,7 @@ export const CampaignFormPanel = ({
                     placeholder={CAMPAIGN_COPY.form.bodyPlaceholder}
                     value={formValues.body}
                   />
+                  {fieldErrors.body ? <p className="text-sm text-red-700">{fieldErrors.body}</p> : null}
                 </div>
               </div>
             </Card>
@@ -137,13 +164,18 @@ export const CampaignFormPanel = ({
                 </div>
 
                 <CampaignRecipientPicker
+                  createRecipientCandidate={createRecipientCandidate}
+                  createRecipientErrorMessage={createRecipientErrorMessage}
                   isLoading={isRecipientOptionsLoading}
+                  isCreatingRecipient={isCreatingRecipient}
+                  onCreateRecipient={onCreateRecipient}
                   onRecipientSearchChange={onRecipientSearchChange}
                   onRecipientToggle={onRecipientToggle}
                   recipientOptions={recipientOptions}
                   recipientSearch={recipientSearch}
                   selectedRecipients={selectedRecipients}
                 />
+                {fieldErrors.recipientIds ? <p className="text-sm text-red-700">{fieldErrors.recipientIds}</p> : null}
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Button onClick={onBack} type="button" variant="tertiary">

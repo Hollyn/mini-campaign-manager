@@ -7,7 +7,7 @@ Mini Campaign Manager is yarn monorepo for creating, scheduling, sending, and tr
 1. Start full stack:
 
 ```bash
-SEED=true docker compose up --build
+docker compose up
 ```
 
 2. Open app: `http://localhost:5173`
@@ -19,8 +19,8 @@ SEED=true docker compose up --build
 Notes:
 
 - Compose waits for Postgres health, runs migrations before API boot, and uses `http://api:4000` for container-to-container Vite proxying
-- Demo data loads only when `SEED=true`; `.env.example` now defaults to `false` for safer non-demo environments
-- Set `SEED=false` if you want to keep existing data on later restarts
+- Demo data loads on first-run defaults so `docker compose up` gives working login right away
+- Set `SEED=false` in `.env` if you want later restarts without reseeding demo data
 
 ## Manual Setup
 
@@ -103,7 +103,7 @@ App URLs:
 | `PORT` | `4000` | API port |
 | `FRONTEND_PORT` | `5173` | Vite dev server port |
 | `VITE_API_PROXY_TARGET` | `http://localhost:4000` | Local frontend proxy target for `/api`; Docker Compose overrides this to `http://api:4000` |
-| `SEED` | `false` | Compose startup seeding toggle; set to `true` only when you want demo data loaded |
+| `SEED` | `true` | Compose startup seeding toggle; set to `false` after first seeded boot if you want later restarts without demo reload |
 
 ## Testing
 

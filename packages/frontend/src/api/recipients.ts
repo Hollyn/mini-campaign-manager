@@ -26,7 +26,7 @@ export const getRecipients = (query: RecipientListQuery) =>
   apiRequest<RecipientListResponse>(`/recipients?${toRecipientQuery(query)}`)
 
 export const createRecipient = (payload: CreateRecipientRequest) =>
-  apiRequest<RecipientResponse>('/recipients', {
+  apiRequest<RecipientResponse>('/recipient', {
     body: JSON.stringify(payload),
     method: 'POST'
   })

@@ -16,14 +16,19 @@ export const CampaignCreatePage = () => {
       <PageBackLink label="Back to Campaigns" onClick={page.onBack} />
       {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
       <CampaignFormPanel
+        createRecipientCandidate={page.createRecipientCandidate}
+        createRecipientErrorMessage={page.createRecipientErrorMessage}
         errorMessage={page.formErrorMessage}
+        fieldErrors={page.fieldErrors}
         formValues={page.formValues}
+        isCreatingRecipient={page.isCreatingRecipient}
         isReadonly={page.isReadonly}
         isRecipientOptionsLoading={page.isRecipientOptionsLoading}
         isSubmitting={page.isSubmitting}
         mode={page.mode}
         onBack={page.onBack}
         onBodyChange={page.handleBodyChange}
+        onCreateRecipient={page.handleCreateRecipientFromSearch}
         onFieldChange={page.handleFieldChange}
         onRecipientSearchChange={page.handleRecipientSearchChange}
         onRecipientToggle={page.handleRecipientToggle}

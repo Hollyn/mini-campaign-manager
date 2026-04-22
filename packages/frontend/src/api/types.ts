@@ -35,8 +35,11 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  token?: string
   user: AuthUser
+}
+
+export interface AuthSessionResponse extends AuthResponse {
+  token: string
 }
 
 export interface HealthResponse {

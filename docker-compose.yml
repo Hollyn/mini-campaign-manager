@@ -30,7 +30,7 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CAMPAIGN_PROCESSOR_POLL_MS: ${CAMPAIGN_PROCESSOR_POLL_MS:-2000}
       PORT: ${PORT:-4000}
-      SEED: ${SEED:-false}
+      SEED: ${SEED:-true}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$PORT/health >/dev/null || exit 1"]
       interval: 5s

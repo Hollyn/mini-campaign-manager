@@ -1,5 +1,7 @@
 import { CAMPAIGN_COPY } from '../../constants/campaigns'
 import { cn } from '../../lib/utils'
+import { Alert } from '../ui/alert'
+import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 
 interface RecipientOption {
@@ -8,8 +10,17 @@ interface RecipientOption {
   name: string
 }
 
+interface CreateRecipientCandidate {
+  email: string
+  name: string
+}
+
 interface CampaignRecipientPickerProps {
+  createRecipientCandidate: CreateRecipientCandidate | null
+  createRecipientErrorMessage: string | null
   isLoading: boolean
+  isCreatingRecipient: boolean
+  onCreateRecipient: () => void
   onRecipientSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onRecipientToggle: (recipient: RecipientOption) => void
   recipientOptions: RecipientOption[]
@@ -18,7 +29,11 @@ interface CampaignRecipientPickerProps {
 }
 
 export const CampaignRecipientPicker = ({
+  createRecipientCandidate,
+  createRecipientErrorMessage,
   isLoading,
+  isCreatingRecipient,
+  onCreateRecipient,
   onRecipientSearchChange,
   onRecipientToggle,
   recipientOptions,
@@ -59,6 +74,28 @@ export const CampaignRecipientPicker = ({
         type="search"
         value={recipientSearch}
       />
+
+      {createRecipientCandidate ? (
+        <div className="rounded-[1.25rem] border border-dashed border-primary/25 bg-primary/5 px-4 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-on-background">{CAMPAIGN_COPY.form.createRecipient}</p>
+              <p className="text-sm text-on-surface-variant">
+                {CAMPAIGN_COPY.form.createRecipientSummary(
+                  createRecipientCandidate.email,
+                  createRecipientCandidate.name
+                )}
+              </p>
+            </div>
+
+            <Button disabled={isCreatingRecipient} onClick={onCreateRecipient} type="button">
+              {isCreatingRecipient ? CAMPAIGN_COPY.form.createRecipientPending : CAMPAIGN_COPY.form.createRecipient}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {createRecipientErrorMessage ? <Alert variant="destructive">{createRecipientErrorMessage}</Alert> : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">

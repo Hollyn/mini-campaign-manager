@@ -92,6 +92,9 @@ export const CAMPAIGN_COPY = {
     campaignPaneTitle: 'Campaign',
     bodyLabel: 'Message body',
     bodyPlaceholder: 'Write campaign copy here',
+    createRecipient: 'Create recipient',
+    createRecipientPending: 'Creating recipient...',
+    createRecipientSummary: (email: string, name: string) => `Add ${email} as ${name} and attach it to this campaign.`,
     createTitle: 'Create campaign',
     editorActions: {
       bold: 'Bold',
@@ -106,6 +109,7 @@ export const CAMPAIGN_COPY = {
     recipientPaneTitle: 'Recipients',
     recipientEmpty: 'No matching recipients yet. Adjust search or create contacts from recipient studio.',
     recipientLabel: 'Recipients',
+    recipientNameFallback: 'New Recipient',
     searchPlaceholder: 'Search recipients by name or email',
     selectedCount: (count: number) => `${count} selected`,
     selectedLabel: 'Selected audience'
@@ -131,6 +135,7 @@ export const CAMPAIGN_COPY = {
   },
   list: {
     empty: 'No campaigns match this view.',
+    sortByLabel: 'Sort by',
     searchLabel: 'Search campaigns',
     searchPlaceholder: 'Search by name or subject'
   },
@@ -178,14 +183,14 @@ export const CAMPAIGN_FORM_FIELDS = [
 
 export const CAMPAIGN_STATUS_STYLES = {
   draft: 'bg-slate-200 text-slate-700',
-  scheduled: 'bg-primary-container text-on-primary-container',
+  scheduled: 'bg-blue-100 text-blue-800',
   sending: 'bg-amber-100 text-amber-800',
   sent: 'bg-emerald-100 text-emerald-700'
 } as const
 
 export const CAMPAIGN_STATUS_DOT_STYLES = {
   draft: 'bg-slate-500',
-  scheduled: 'bg-primary',
+  scheduled: 'bg-blue-500',
   sending: 'bg-amber-500',
   sent: 'bg-emerald-500'
 } as const

@@ -11,12 +11,7 @@ interface CampaignDetailInfoPanelProps {
 export const CampaignDetailInfoPanel = ({ campaign, recipientSummary }: CampaignDetailInfoPanelProps) => (
   <Card className="rounded-[1.5rem] bg-surface-container-low px-4 py-4 sm:px-5 sm:py-5 xl:sticky xl:top-4">
     <div className="space-y-4">
-      <div className="space-y-1">
-        <p className="text-[0.72rem] tracking-[0.08em] text-on-surface-variant">
-          {CAMPAIGN_COPY.detail.infoTitle}
-        </p>
-        <p className="text-base font-medium text-on-background">{campaign.name}</p>
-      </div>
+      <p className="text-[0.72rem] tracking-[0.08em] text-on-surface-variant">{CAMPAIGN_COPY.detail.infoTitle}</p>
 
       <div className="space-y-3">
         <div className="space-y-1">

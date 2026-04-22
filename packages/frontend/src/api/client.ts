@@ -1,4 +1,5 @@
 import { ApiError } from './types'
+import { useAuthStore } from '../store/auth-store'
 
 const API_BASE_PATH = '/api'
 
@@ -31,14 +32,19 @@ const parseErrorResponse = async (response: Response) => {
 
 export const apiRequest = async <T>(path: string, init?: RequestInit) => {
   const headers = new Headers(init?.headers)
+  const token = useAuthStore.getState().token
 
   if (!headers.has('Content-Type') && init?.body) {
     headers.set('Content-Type', 'application/json')
   }
 
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
   const response = await fetch(`${API_BASE_PATH}${path}`, {
     ...init,
-    credentials: 'include',
+    credentials: 'omit',
     headers
   })
 

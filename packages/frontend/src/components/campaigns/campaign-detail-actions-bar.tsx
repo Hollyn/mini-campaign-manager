@@ -6,14 +6,14 @@ import { PageBackLink } from '../ui/page-back-link'
 import { CampaignStatusBadge } from './campaign-status-badge'
 
 interface CampaignDetailActionsBarProps {
+  campaignName: string
+  campaignSubject: string
   canDelete: boolean
-  canEdit: boolean
   canSchedule: boolean
   canSend: boolean
   isSending: boolean
   onBack: () => void
   onDelete: () => void
-  onEdit: () => void
   onSchedule: () => void
   onSend: () => void
   sendErrorMessage: string | null
@@ -21,34 +21,34 @@ interface CampaignDetailActionsBarProps {
 }
 
 export const CampaignDetailActionsBar = ({
+  campaignName,
+  campaignSubject,
   canDelete,
-  canEdit,
   canSchedule,
   canSend,
   isSending,
   onBack,
   onDelete,
-  onEdit,
   onSchedule,
   onSend,
   sendErrorMessage,
   status
 }: CampaignDetailActionsBarProps) => (
   <div className="space-y-3">
-    <div className="flex items-start justify-between gap-3">
-      <CampaignStatusBadge status={status} />
-    </div>
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className="space-y-3">
+        <PageBackLink label={CAMPAIGN_COPY.actions.back} onClick={onBack} />
 
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <PageBackLink label={CAMPAIGN_COPY.actions.back} onClick={onBack} />
+        <div className="space-y-2">
+          <CampaignStatusBadge status={status} />
+          <div className="space-y-1">
+            <h1 className="text-3xl font-medium tracking-tight text-on-background">{campaignName}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-on-surface-variant">{campaignSubject}</p>
+          </div>
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-2 lg:justify-end">
-        {canEdit ? (
-          <Button className="px-3 py-2" onClick={onEdit} type="button" variant="secondary">
-            {CAMPAIGN_COPY.actions.edit}
-          </Button>
-        ) : null}
-
         {canSchedule ? (
           <Button className="px-3 py-2" onClick={onSchedule} type="button" variant="secondary">
             {CAMPAIGN_COPY.actions.schedule}

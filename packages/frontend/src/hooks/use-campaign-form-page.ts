@@ -12,17 +12,31 @@ import {
 import { useDebouncedValue } from './use-debounced-value'
 import { useCampaign } from './use-campaign'
 import { useCreateCampaign } from './use-create-campaign'
+import { useCreateRecipient } from './use-create-recipient'
 import { useRecipientOptions } from './use-recipient-options'
 import { useUpdateCampaign } from './use-update-campaign'
-import { getRequestErrorMessage } from '../lib/request-error'
+import { getRequestErrorMessage, getRequestFieldErrors } from '../lib/request-error'
 
 type CampaignFormMode = 'create' | 'edit'
+const campaignFormFields = ['body', 'name', 'recipientIds', 'subject'] as const
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const toSelectedRecipient = (recipient: Recipient) => ({
   email: recipient.email,
   id: recipient.id,
   name: recipient.name
 })
+
+const toRecipientNameFromEmail = (email: string) => {
+  const localPart = email.split('@')[0] ?? ''
+  const words = localPart
+    .split(/[._-]+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+
+  return words.length > 0 ? words.join(' ') : CAMPAIGN_COPY.form.recipientNameFallback
+}
 
 export const useCampaignFormPage = (campaignId?: string) => {
   const navigate = useNavigate()
@@ -39,6 +53,25 @@ export const useCampaignFormPage = (campaignId?: string) => {
   const createMutation = useCreateCampaign({
     onSuccess: async (response) => {
       navigate(campaignDetailRoute(response.campaign.id), { replace: true })
+    }
+  })
+  const createRecipientMutation = useCreateRecipient({
+    onSuccess: async ({ recipient }) => {
+      const nextRecipient = toSelectedRecipient(recipient)
+
+      setSelectedRecipients((currentRecipients) => {
+        const hasRecipient = currentRecipients.some((currentRecipient) => currentRecipient.id === nextRecipient.id)
+        const nextRecipients = hasRecipient ? currentRecipients : [...currentRecipients, nextRecipient]
+
+        setFormValues((currentValues) => ({
+          ...currentValues,
+          recipientIds: nextRecipients.map((currentRecipient) => currentRecipient.id)
+        }))
+
+        return nextRecipients
+      })
+
+      setRecipientSearch('')
     }
   })
 
@@ -81,13 +114,32 @@ export const useCampaignFormPage = (campaignId?: string) => {
 
   const formErrorMessage = useMemo(() => {
     const activeError = mode === 'edit' ? updateMutation.error : createMutation.error
+    const fieldErrors = getRequestFieldErrors(activeError, campaignFormFields)
 
     if (!activeError) {
       return null
     }
 
+    if (Object.keys(fieldErrors).length > 0) {
+      return null
+    }
+
     return getRequestErrorMessage(activeError, CAMPAIGN_COPY.errors.generic)
   }, [createMutation.error, mode, updateMutation.error])
+
+  const fieldErrors = useMemo(() => {
+    const activeError = mode === 'edit' ? updateMutation.error : createMutation.error
+
+    return getRequestFieldErrors(activeError, campaignFormFields)
+  }, [createMutation.error, mode, updateMutation.error])
+
+  const createRecipientErrorMessage = useMemo(() => {
+    if (!createRecipientMutation.error) {
+      return null
+    }
+
+    return getRequestErrorMessage(createRecipientMutation.error, CAMPAIGN_COPY.errors.generic)
+  }, [createRecipientMutation.error])
 
   const recipientOptions = useMemo(() => {
     const optionMap = new Map<string, { email: string; id: string; name: string }>()
@@ -102,6 +154,25 @@ export const useCampaignFormPage = (campaignId?: string) => {
 
     return [...optionMap.values()]
   }, [recipientOptionsQuery.data?.recipients, selectedRecipients])
+
+  const createRecipientCandidate = useMemo(() => {
+    const email = recipientSearch.trim().toLowerCase()
+
+    if (!emailPattern.test(email)) {
+      return null
+    }
+
+    const emailExists = recipientOptions.some((recipient) => recipient.email.toLowerCase() === email)
+
+    if (emailExists) {
+      return null
+    }
+
+    return {
+      email,
+      name: toRecipientNameFromEmail(email)
+    }
+  }, [recipientOptions, recipientSearch])
 
   const handleFieldChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -120,10 +191,12 @@ export const useCampaignFormPage = (campaignId?: string) => {
   }
 
   const handleRecipientSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    createRecipientMutation.reset()
     setRecipientSearch(event.target.value)
   }
 
   const handleRecipientToggle = (recipient: { email: string; id: string; name: string }) => {
+    createRecipientMutation.reset()
     setSelectedRecipients((currentRecipients) => {
       const isSelected = currentRecipients.some((currentRecipient) => currentRecipient.id === recipient.id)
 
@@ -138,6 +211,15 @@ export const useCampaignFormPage = (campaignId?: string) => {
 
       return nextRecipients
     })
+  }
+
+  const handleCreateRecipientFromSearch = () => {
+    if (!createRecipientCandidate) {
+      return
+    }
+
+    createRecipientMutation.reset()
+    createRecipientMutation.mutate(createRecipientCandidate)
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -161,13 +243,18 @@ export const useCampaignFormPage = (campaignId?: string) => {
   return {
     campaignName: campaignQuery.data?.campaign.name ?? '',
     handleBodyChange,
+    createRecipientCandidate,
+    createRecipientErrorMessage,
     formErrorMessage,
     formValues,
+    fieldErrors,
     handleFieldChange,
+    handleCreateRecipientFromSearch,
     handleRecipientSearchChange,
     handleRecipientToggle,
     handleSubmit,
     isLoading: mode === 'edit' && campaignQuery.isPending && !isHydrated,
+    isCreatingRecipient: createRecipientMutation.isPending,
     isReadonly,
     isRecipientOptionsLoading: recipientOptionsQuery.isPending,
     isSubmitting,

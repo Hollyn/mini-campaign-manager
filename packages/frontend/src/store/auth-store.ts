@@ -4,28 +4,24 @@ import { AuthUser } from '../api/types'
 
 interface AuthStore {
   clearAuth: () => void
-  isAuthenticated: boolean
-  isBootstrapped: boolean
-  setAuth: (user: AuthUser) => void
+  setAuth: (token: string, user: AuthUser) => void
+  token: string | null
   user: AuthUser | null
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
   clearAuth: () => {
     set({
-      isAuthenticated: false,
-      isBootstrapped: true,
+      token: null,
       user: null
     })
   },
-  isAuthenticated: false,
-  isBootstrapped: false,
-  setAuth: (user) => {
+  setAuth: (token, user) => {
     set({
-      isAuthenticated: true,
-      isBootstrapped: true,
+      token,
       user
     })
   },
+  token: null,
   user: null
 }))
