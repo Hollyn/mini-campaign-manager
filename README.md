@@ -129,26 +129,30 @@ mini-campaign-manager/
 
 ### 1. Tasks I delegated
 
-- Scaffolded repo structure and yarn workspace wiring
-- Implemented campaign, recipient, and auth flows across API and frontend
-- Added migrations, seed data, and test coverage for core business rules
-- Tightened Docker Compose, startup checks, and frontend error handling polish
+I used Claude Code as an implementation and review partner, not as autopilot.
+
+- Scaffolding the yarn monorepo shape and keeping API, frontend, and DB workspaces aligned
+- Drafting contract-first API shapes, validation boundaries, and typed request/response models for auth, campaigns, and recipients
+- Generating first-pass backend and frontend code for campaign CRUD, scheduling, recipient management, and send simulation
+- Drafting integration tests for critical business rules, then tightening them after manual review and verification
+- Reviewing Docker Compose startup flow, environment defaults, and README setup steps for consistency gaps
 
 ### 2. Real prompts I used
 
-- `follow ai-tasks/phase1.md`
-- `follow ai-tasks/phase6.md`
-- `follow ai-tasks/phase7.md`
+- `Design contract-first API shapes for auth, campaigns, and recipients in this yarn monorepo. Define request/response types, validation needs, error response shape, and business-rule edge cases before writing handlers.`
+- `Implement the campaign send flow in Express + Sequelize so POST /campaigns/:id/send returns 202 immediately, marks campaign status as sending, processes pending recipients asynchronously with simulated latency and random sent/failed outcomes, and finishes with campaign status sent.`
+- `Write Jest + Supertest coverage for the highest-risk business rules: editing a non-draft campaign should return 409, scheduling in the past should return 422, and sending should leave no campaign recipients in pending state.`
 
 ### 3. Where Claude Code needed correction
 
-- Infra defaults had to stay aligned across `.env.example`, Docker Compose, and Vite proxy settings
-- Error UX needed review so mutation failures surfaced globally instead of only inside local forms and modals
-- README copy needed final human pass to keep setup steps honest and consistent with actual scripts
+- I had to verify infrastructure alignment across `.env.example`, `docker-compose.yml`, and the frontend proxy so local setup matched the documented commands
+- I corrected generated code and README copy where it was too generic and did not fully reflect this repo's exact routes, startup flow, or environment defaults
+- I did not trust async send logic or tests at face value; I manually verified status transitions, background processing behavior, and stats responses against the challenge requirements
+- I reviewed error handling and frontend UX details to make sure API failures were surfaced clearly instead of getting trapped inside local component state
 
 ### 4. What I would not delegate
 
-- Choosing production secrets or deployment credentials
-- Destructive git operations on shared work without explicit approval
-- Product or security decisions that change business rules without review
-- Claiming tests or runtime behavior passed without actually verifying them
+- Final decisions on business rules and API behavior, because correctness matters more than generation speed
+- Security-sensitive choices such as auth behavior, trusted origins, and secret handling
+- Claims that tests, Docker startup, or runtime behavior worked without actually running and checking them
+- Destructive git actions or broad cleanup that could hide mistakes instead of fixing them explicitly
