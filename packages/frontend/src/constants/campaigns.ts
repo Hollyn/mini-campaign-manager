@@ -1,13 +1,28 @@
-import { CreateCampaignRequest } from '../api/types'
+import { CampaignListSortBy, CampaignRecipientListSortBy, CreateCampaignRequest } from '../api/types'
+
+export const campaignRecipientActivityFilters = ['all', 'sent', 'failed', 'opened'] as const
+
+export type CampaignRecipientActivityFilter = (typeof campaignRecipientActivityFilters)[number]
 
 export const CAMPAIGN_PAGE_SIZE = 8
 export const CAMPAIGN_RECIPIENT_PAGE_SIZE = 12
 export const CAMPAIGN_SEARCH_DEBOUNCE_MS = 300
 
+export const CAMPAIGN_DEFAULT_SORT = {
+  direction: 'desc' as const,
+  field: 'createdAt' as CampaignListSortBy
+}
+
+export const CAMPAIGN_RECIPIENT_DEFAULT_SORT = {
+  direction: 'asc' as const,
+  field: 'name' as CampaignRecipientListSortBy
+}
+
 export const CAMPAIGN_QUERY_KEYS = {
   all: ['campaigns'] as const,
   detail: (id: string) => ['campaigns', 'detail', id] as const,
-  list: (page: number, search: string, status?: string) => ['campaigns', 'list', page, search, status ?? 'all'] as const
+  list: (page: number, limit: number, search: string, sortBy: string, sortOrder: string, status?: string) =>
+    ['campaigns', 'list', page, limit, search, sortBy, sortOrder, status ?? 'all'] as const
 } as const
 
 export const campaignDetailRoute = (campaignId: string) => `/campaigns/${campaignId}`
@@ -24,9 +39,7 @@ export const CAMPAIGN_COPY = {
     delete: 'Delete',
     edit: 'Edit draft',
     editInline: 'Edit',
-    nextPage: 'Next',
     open: 'Open',
-    previousPage: 'Previous',
     save: 'Save changes',
     schedule: 'Schedule',
     send: 'Send now'
@@ -37,8 +50,30 @@ export const CAMPAIGN_COPY = {
     title: 'Delete this campaign?'
   },
   detail: {
+    fields: {
+      audience: 'Audience',
+      created: 'Created',
+      scheduled: 'Scheduled',
+      status: 'Status',
+      subject: 'Subject',
+      title: 'Title',
+      updated: 'Updated'
+    },
     bodyLabel: 'Message body',
+    collapseBody: 'Show less',
+    expandBody: 'Show full message',
+    infoTitle: 'Campaign',
     recipientsLabel: 'Recipient activity',
+    recipientSearchPlaceholder: 'Search recipients',
+    recipientSummary: (total: number) => `${total} recipients`,
+    recipientViewSummary: (visible: number, total: number) => `${visible} of ${total} recipients in view`,
+    recipientFilters: {
+      all: 'All',
+      failed: 'Failed',
+      opened: 'Opened',
+      sent: 'Sent'
+    },
+    recipientsEmpty: 'No recipients match this view.',
     scheduleDescription: 'Choose future date and time before this draft moves into scheduled queue.',
     scheduleEyebrow: 'Delivery timing',
     scheduleTitle: 'Schedule campaign',
@@ -53,16 +88,26 @@ export const CAMPAIGN_COPY = {
     invalidSchedule: 'Choose a future date and time.'
   },
   form: {
-    bodyDescription: 'Write final message exactly how recipients should receive it.',
+    bodyPaneTitle: 'Body',
+    campaignPaneTitle: 'Campaign',
     bodyLabel: 'Message body',
-    createDescription: 'Shape draft, connect recipients, and move straight into delivery workflow.',
+    bodyPlaceholder: 'Write campaign copy here',
     createTitle: 'Create campaign',
-    editDescription: 'Refine draft copy, audience, and structure before delivery starts.',
+    editorActions: {
+      bold: 'Bold',
+      bulletList: 'Bullets',
+      heading: 'Heading',
+      italic: 'Italic',
+      orderedList: 'Numbering',
+      quote: 'Quote',
+      underline: 'Underline'
+    },
     editTitle: 'Edit campaign',
+    recipientPaneTitle: 'Recipients',
     recipientEmpty: 'No matching recipients yet. Adjust search or create contacts from recipient studio.',
-    recipientHelper: 'Search existing recipients by name or email, then build audience set.',
     recipientLabel: 'Recipients',
     searchPlaceholder: 'Search recipients by name or email',
+    selectedCount: (count: number) => `${count} selected`,
     selectedLabel: 'Selected audience'
   },
   headers: {
@@ -79,31 +124,25 @@ export const CAMPAIGN_COPY = {
     subject: 'Subject'
   },
   helper: {
-    debounce: 'Search waits for a pause before refreshing.',
     emptyRecipients: 'No recipients attached yet.',
     pagination: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} campaigns`,
-    refreshing: 'Refreshing campaigns',
-    totalCount: (total: number) => `${total} campaigns in workspace`
-  },
-  intro: {
-    badge: 'Campaign Ledger',
-    description: 'Draft, queue, and review every message inside one deliberate control surface.',
-    liveTotalLabel: 'Live total',
-    title: 'Campaign command'
+    recipientPagination: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} recipients`,
+    totalCount: (total: number) => `${total} campaigns`
   },
   list: {
+    empty: 'No campaigns match this view.',
     searchLabel: 'Search campaigns',
-    searchPlaceholder: 'Search by name or subject',
-    tableDescription: 'Open any row for full delivery detail and actions.',
-    tableTitle: 'All campaigns'
+    searchPlaceholder: 'Search by name or subject'
   },
   stats: {
     failed: 'Failed',
+    received: 'Received',
     openRate: 'Open rate',
     opened: 'Opened',
     recipients: 'Total recipients',
     sendRate: 'Send rate',
-    sent: 'Sent'
+    sent: 'Sent',
+    total: 'Total'
   },
   statusLabels: {
     draft: 'Draft',

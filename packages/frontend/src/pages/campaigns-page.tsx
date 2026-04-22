@@ -1,7 +1,6 @@
 import { CampaignEmptyState } from '../components/campaigns/campaign-empty-state'
 import { CampaignListSkeleton } from '../components/campaigns/campaign-list-skeleton'
 import { CampaignTable } from '../components/campaigns/campaign-table'
-import { CampaignTableToolbar } from '../components/campaigns/campaign-table-toolbar'
 import { DeleteCampaignModal } from '../components/campaigns/delete-campaign-modal'
 import { Alert } from '../components/ui/alert'
 import { useCampaignsPage } from '../hooks/use-campaigns-page'
@@ -15,29 +14,31 @@ export const CampaignsPage = () => {
 
   return (
     <div className="space-y-6">
-      <CampaignTableToolbar
-        onCreateCampaign={page.onCreateCampaign}
-        onSearchChange={page.handleSearchChange}
-        search={page.search}
-        totalCampaigns={page.closeToLiveTotal}
-      />
-
       {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
 
-      {page.campaigns.length === 0 && !page.pageErrorMessage ? (
+      {page.totalCampaigns === 0 && page.search.length === 0 && !page.pageErrorMessage ? (
         <CampaignEmptyState onCreateCampaign={page.onCreateCampaign} />
-      ) : page.campaigns.length > 0 ? (
+      ) : (
         <CampaignTable
           campaigns={page.campaigns}
           isRefetching={page.isRefetching}
+          onCreateCampaign={page.onCreateCampaign}
           onDeleteCampaign={page.onDeleteCampaign}
           onEditCampaign={page.onEditCampaign}
           onNextPage={page.handleNextPage}
           onOpenCampaign={page.onOpenCampaign}
+          onPageChange={page.handlePageChange}
+          onPageSizeChange={page.handlePageSizeChange}
           onPreviousPage={page.handlePreviousPage}
+          onSearchChange={page.handleSearchChange}
+          onSortChange={page.handleSortChange}
+          pageSize={page.pageSize}
           pagination={page.pagination}
+          search={page.search}
+          sortBy={page.sortBy}
+          sortDirection={page.sortDirection}
         />
-      ) : null}
+      )}
 
       <DeleteCampaignModal
         campaign={page.deleteCandidate}

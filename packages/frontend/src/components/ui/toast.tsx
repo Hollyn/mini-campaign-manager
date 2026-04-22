@@ -31,7 +31,7 @@ export const Toast = ({ toast }: ToastProps) => {
 
       <button
         aria-label={TOAST_COPY.dismiss}
-        className="shrink-0 rounded-full px-3 py-1.5 text-[0.68rem] font-medium uppercase tracking-[0.24em] text-on-surface-variant transition-colors hover:bg-white/60 hover:text-on-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="shrink-0 rounded-full px-3 py-1.5 text-[0.68rem] font-medium tracking-[0.08em] text-on-surface-variant transition-colors hover:bg-white/60 hover:text-on-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         onClick={handleDismiss}
         type="button"
       >

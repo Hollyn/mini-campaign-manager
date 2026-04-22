@@ -4,6 +4,8 @@ import { CAMPAIGN_PAGINATION } from '../constants/campaigns'
 import { campaignRecipientStatusSchema, campaignStatusSchema } from './shared'
 
 const campaignTextSchema = z.string().trim().min(1, 'Field is required')
+const sortOrderSchema = z.enum(['asc', 'desc'])
+const campaignListSortBySchema = z.enum(['createdAt', 'name', 'recipientCount', 'status', 'subject'])
 
 const campaignIdSchema = z.object({
   id: z.string().uuid('Campaign id must be a valid UUID')
@@ -68,6 +70,8 @@ export const campaignListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(CAMPAIGN_PAGINATION.maxLimit).default(CAMPAIGN_PAGINATION.defaultLimit),
   page: z.coerce.number().int().min(CAMPAIGN_PAGINATION.minPage).default(CAMPAIGN_PAGINATION.minPage),
   search: z.string().trim().max(255, 'Search must be at most 255 characters').optional().default(''),
+  sortBy: campaignListSortBySchema.default('createdAt'),
+  sortOrder: sortOrderSchema.default('desc'),
   status: campaignStatusSchema.optional()
 })
 
@@ -101,6 +105,7 @@ export type Campaign = z.infer<typeof campaignSchema>
 export type CampaignListItem = z.infer<typeof campaignListItemSchema>
 export type CampaignListQuery = z.infer<typeof campaignListQuerySchema>
 export type CampaignListResponse = z.infer<typeof campaignListResponseSchema>
+export type CampaignListSortBy = z.infer<typeof campaignListSortBySchema>
 export type CampaignParams = z.infer<typeof campaignParamsSchema>
 export type CampaignRecipientActivity = z.infer<typeof campaignRecipientActivitySchema>
 export type CampaignResponse = z.infer<typeof campaignResponseSchema>
@@ -108,4 +113,5 @@ export type CampaignStats = z.infer<typeof campaignStatsSchema>
 export type CreateCampaignRequest = z.infer<typeof createCampaignRequestSchema>
 export type MessageResponse = z.infer<typeof messageResponseSchema>
 export type ScheduleCampaignRequest = z.infer<typeof scheduleCampaignRequestSchema>
+export type SortOrder = z.infer<typeof sortOrderSchema>
 export type UpdateCampaignRequest = z.infer<typeof updateCampaignRequestSchema>

@@ -1,42 +1,54 @@
-import { MouseEvent } from 'react'
+import { ChangeEvent, MouseEvent } from 'react'
 
-import { CampaignListItem } from '../../api/types'
+import { CampaignListItem, CampaignListSortBy, PaginationMeta, SortDirection } from '../../api/types'
 import { CAMPAIGN_COPY } from '../../constants/campaigns'
+import { DATA_TABLE_PAGE_SIZE_OPTIONS } from '../../constants/datatable'
 import { formatCampaignDate } from '../../lib/campaign-format'
+import { getPageRange } from '../../lib/data-table'
 import { Button } from '../ui/button'
-import { Card } from '../ui/card'
+import { DataTable, DataTableSortButton } from '../ui/data-table'
 import { CampaignStatusBadge } from './campaign-status-badge'
-
-interface PaginationSummary {
-  limit: number
-  page: number
-  total: number
-  totalPages: number
-}
 
 interface CampaignTableProps {
   campaigns: CampaignListItem[]
   isRefetching: boolean
+  onCreateCampaign: () => void
   onDeleteCampaign: (campaign: CampaignListItem) => void
   onEditCampaign: (campaignId: string) => void
   onNextPage: () => void
   onOpenCampaign: (campaignId: string) => void
+  onPageChange: (page: number) => void
+  onPageSizeChange: (event: ChangeEvent<HTMLSelectElement>) => void
   onPreviousPage: () => void
-  pagination: PaginationSummary | null
+  onSearchChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onSortChange: (sortBy: CampaignListSortBy) => void
+  pageSize: number
+  pagination: PaginationMeta | null
+  search: string
+  sortBy: CampaignListSortBy
+  sortDirection: SortDirection
 }
 
 export const CampaignTable = ({
   campaigns,
   isRefetching,
+  onCreateCampaign,
   onDeleteCampaign,
   onEditCampaign,
   onNextPage,
   onOpenCampaign,
+  onPageChange,
+  onPageSizeChange,
   onPreviousPage,
-  pagination
+  onSearchChange,
+  onSortChange,
+  pageSize,
+  pagination,
+  search,
+  sortBy,
+  sortDirection
 }: CampaignTableProps) => {
-  const start = pagination ? (pagination.page - 1) * pagination.limit + 1 : 0
-  const end = pagination ? Math.min(start + campaigns.length - 1, pagination.total) : 0
+  const { end, start } = getPageRange(pagination, campaigns.length)
 
   const handleActionClick = (event: MouseEvent<HTMLButtonElement>, action: () => void) => {
     event.stopPropagation()
@@ -44,37 +56,81 @@ export const CampaignTable = ({
   }
 
   return (
-    <Card className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-surface-container-lowest/95">
-      <div className="border-b border-surface-container-low px-6 py-5">
-        <h2 className="text-xl font-medium tracking-tight text-on-background">{CAMPAIGN_COPY.list.tableTitle}</h2>
-        <p className="mt-1 text-sm text-on-surface-variant">{CAMPAIGN_COPY.list.tableDescription}</p>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-surface-container-low text-[0.72rem] uppercase tracking-[0.24em] text-on-surface-variant">
-            <tr>
-              <th className="px-6 py-4">{CAMPAIGN_COPY.headers.name}</th>
-              <th className="px-6 py-4">{CAMPAIGN_COPY.headers.subject}</th>
-              <th className="px-6 py-4">{CAMPAIGN_COPY.headers.status}</th>
-              <th className="px-6 py-4">{CAMPAIGN_COPY.headers.recipients}</th>
-              <th className="px-6 py-4">{CAMPAIGN_COPY.headers.createdAt}</th>
-              <th className="px-6 py-4 text-right">{CAMPAIGN_COPY.headers.actions}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-container-low">
-            {campaigns.map((campaign) => (
+    <DataTable
+      actions={
+        <Button onClick={onCreateCampaign} type="button">
+          {CAMPAIGN_COPY.actions.create}
+        </Button>
+      }
+      currentPage={pagination?.page ?? 1}
+      isRefetching={isRefetching}
+      onNextPage={onNextPage}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      onPreviousPage={onPreviousPage}
+      onSearchChange={onSearchChange}
+      pageSize={pageSize}
+      pageSizeOptions={DATA_TABLE_PAGE_SIZE_OPTIONS}
+      searchPlaceholder={CAMPAIGN_COPY.list.searchPlaceholder}
+      searchValue={search}
+      summary={CAMPAIGN_COPY.helper.pagination(start, end, pagination?.total ?? 0)}
+      totalPages={pagination?.totalPages ?? 0}
+    >
+      <table className="min-w-full border-collapse text-left text-sm">
+        <thead className="bg-surface-container-low text-on-surface-variant">
+          <tr>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'name'}
+                label={CAMPAIGN_COPY.headers.name}
+                onClick={() => onSortChange('name')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'subject'}
+                label={CAMPAIGN_COPY.headers.subject}
+                onClick={() => onSortChange('subject')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'status'}
+                label={CAMPAIGN_COPY.headers.status}
+                onClick={() => onSortChange('status')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'recipientCount'}
+                label={CAMPAIGN_COPY.headers.recipients}
+                onClick={() => onSortChange('recipientCount')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'createdAt'}
+                label={CAMPAIGN_COPY.headers.createdAt}
+                onClick={() => onSortChange('createdAt')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4 text-right">{CAMPAIGN_COPY.headers.actions}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-surface-container-low">
+          {campaigns.length > 0 ? (
+            campaigns.map((campaign) => (
               <tr
                 className="cursor-pointer transition-colors hover:bg-surface-container-low/65"
                 key={campaign.id}
                 onClick={() => onOpenCampaign(campaign.id)}
               >
-                <td className="px-6 py-5">
-                  <div className="space-y-1 text-left">
-                    <p className="font-medium text-on-background">{campaign.name}</p>
-                    <p className="text-xs uppercase tracking-[0.22em] text-on-surface-variant">Open campaign detail</p>
-                  </div>
-                </td>
+                <td className="px-6 py-5 font-medium text-on-background">{campaign.name}</td>
                 <td className="px-6 py-5 text-on-surface-variant">{campaign.subject}</td>
                 <td className="px-6 py-5">
                   <CampaignStatusBadge status={campaign.status} />
@@ -111,25 +167,16 @@ export const CampaignTable = ({
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex flex-col gap-4 border-t border-surface-container-low px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-on-surface-variant">{CAMPAIGN_COPY.helper.pagination(start, end, pagination?.total ?? 0)}</p>
-          {isRefetching ? <p className="mt-1 text-xs uppercase tracking-[0.22em] text-primary">{CAMPAIGN_COPY.helper.refreshing}</p> : null}
-        </div>
-        <div className="flex gap-3">
-          <Button disabled={!pagination || pagination.page <= 1} onClick={onPreviousPage} type="button" variant="secondary">
-            {CAMPAIGN_COPY.actions.previousPage}
-          </Button>
-          <Button disabled={!pagination || pagination.page >= pagination.totalPages} onClick={onNextPage} type="button">
-            {CAMPAIGN_COPY.actions.nextPage}
-          </Button>
-        </div>
-      </div>
-    </Card>
+            ))
+          ) : (
+            <tr>
+              <td className="px-6 py-10 text-center text-sm text-on-surface-variant" colSpan={6}>
+                {CAMPAIGN_COPY.list.empty}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </DataTable>
   )
 }

@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { AUTH_MESSAGES } from '../constants/auth'
 import { getAuthUserBySessionToken } from '../services/auth-service'
 import { AppError } from '../utils/app-error'
-import { getSessionTokenFromRequest } from '../utils/cookies'
+import { getSessionTokenFromRequest } from '../utils/session-token'
 
 export const requireAuth = async (request: Request, _response: Response, next: NextFunction) => {
   try {

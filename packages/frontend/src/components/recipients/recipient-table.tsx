@@ -1,23 +1,29 @@
-import { Recipient } from '../../api/types'
-import { RECIPIENT_COPY } from '../../constants/recipients'
-import { Button } from '../ui/button'
-import { Card } from '../ui/card'
+import { ChangeEvent } from 'react'
 
-interface PaginationSummary {
-  limit: number
-  page: number
-  total: number
-  totalPages: number
-}
+import { PaginationMeta, Recipient, RecipientListSortBy, SortDirection } from '../../api/types'
+import { RECIPIENT_COPY } from '../../constants/recipients'
+import { DATA_TABLE_PAGE_SIZE_OPTIONS } from '../../constants/datatable'
+import { getPageRange } from '../../lib/data-table'
+import { Button } from '../ui/button'
+import { DataTable, DataTableSortButton } from '../ui/data-table'
 
 interface RecipientTableProps {
   isRefetching: boolean
+  onAddRecipient: () => void
   onDelete: (recipient: Recipient) => void
   onEdit: (recipient: Recipient) => void
   onNextPage: () => void
+  onPageChange: (page: number) => void
+  onPageSizeChange: (event: ChangeEvent<HTMLSelectElement>) => void
   onPreviousPage: () => void
-  pagination: PaginationSummary | null
+  onSearchChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onSortChange: (sortBy: RecipientListSortBy) => void
+  pageSize: number
+  pagination: PaginationMeta | null
   recipients: Recipient[]
+  search: string
+  sortBy: RecipientListSortBy
+  sortDirection: SortDirection
 }
 
 const getRecipientInitials = (name: string) =>
@@ -30,39 +36,77 @@ const getRecipientInitials = (name: string) =>
 
 export const RecipientTable = ({
   isRefetching,
+  onAddRecipient,
   onDelete,
   onEdit,
   onNextPage,
+  onPageChange,
+  onPageSizeChange,
   onPreviousPage,
+  onSearchChange,
+  onSortChange,
+  pageSize,
   pagination,
-  recipients
+  recipients,
+  search,
+  sortBy,
+  sortDirection
 }: RecipientTableProps) => {
-  const start = pagination ? (pagination.page - 1) * pagination.limit + 1 : 0
-  const end = pagination ? Math.min(start + recipients.length - 1, pagination.total) : 0
+  const { end, start } = getPageRange(pagination, recipients.length)
 
   return (
-    <Card className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-surface-container-lowest/95">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-surface-container-low text-[0.72rem] uppercase tracking-[0.24em] text-on-surface-variant">
-            <tr>
-              <th className="px-6 py-4">{RECIPIENT_COPY.headers.name}</th>
-              <th className="px-6 py-4">{RECIPIENT_COPY.headers.email}</th>
-              <th className="px-6 py-4 text-right">{RECIPIENT_COPY.headers.actions}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-container-low">
-            {recipients.map((recipient) => (
+    <DataTable
+      actions={
+        <Button onClick={onAddRecipient} type="button">
+          {RECIPIENT_COPY.actions.add}
+        </Button>
+      }
+      currentPage={pagination?.page ?? 1}
+      isRefetching={isRefetching}
+      onNextPage={onNextPage}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      onPreviousPage={onPreviousPage}
+      onSearchChange={onSearchChange}
+      pageSize={pageSize}
+      pageSizeOptions={DATA_TABLE_PAGE_SIZE_OPTIONS}
+      searchPlaceholder={RECIPIENT_COPY.list.searchPlaceholder}
+      searchValue={search}
+      summary={RECIPIENT_COPY.helper.pagination(start, end, pagination?.total ?? 0)}
+      totalPages={pagination?.totalPages ?? 0}
+    >
+      <table className="min-w-full border-collapse text-left text-sm">
+        <thead className="bg-surface-container-low text-on-surface-variant">
+          <tr>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'name'}
+                label={RECIPIENT_COPY.headers.name}
+                onClick={() => onSortChange('name')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4">
+              <DataTableSortButton
+                isActive={sortBy === 'email'}
+                label={RECIPIENT_COPY.headers.email}
+                onClick={() => onSortChange('email')}
+                sortDirection={sortDirection}
+              />
+            </th>
+            <th className="px-6 py-4 text-right">{RECIPIENT_COPY.headers.actions}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-surface-container-low">
+          {recipients.length > 0 ? (
+            recipients.map((recipient) => (
               <tr className="transition-colors hover:bg-surface-container-low/65" key={recipient.id}>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-xs font-medium uppercase tracking-[0.18em] text-on-primary-container">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-xs font-medium text-on-primary-container">
                       {getRecipientInitials(recipient.name)}
                     </div>
-                    <div>
-                      <p className="font-medium text-on-background">{recipient.name}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.22em] text-on-surface-variant">{RECIPIENT_COPY.row.eyebrow}</p>
-                    </div>
+                    <p className="font-medium text-on-background">{recipient.name}</p>
                   </div>
                 </td>
                 <td className="px-6 py-5 text-on-surface-variant">{recipient.email}</td>
@@ -77,34 +121,16 @@ export const RecipientTable = ({
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex flex-col gap-4 border-t border-surface-container-low px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-on-surface-variant">{RECIPIENT_COPY.helper.pagination(start, end, pagination?.total ?? 0)}</p>
-          {isRefetching ? <p className="mt-1 text-xs uppercase tracking-[0.22em] text-primary">{RECIPIENT_COPY.helper.refreshing}</p> : null}
-        </div>
-        <div className="flex gap-3">
-          <Button
-            disabled={!pagination || pagination.page <= 1}
-            onClick={onPreviousPage}
-            type="button"
-            variant="secondary"
-          >
-            {RECIPIENT_COPY.actions.previousPage}
-          </Button>
-          <Button
-            disabled={!pagination || pagination.page >= pagination.totalPages}
-            onClick={onNextPage}
-            type="button"
-          >
-            {RECIPIENT_COPY.actions.nextPage}
-          </Button>
-        </div>
-      </div>
-    </Card>
+            ))
+          ) : (
+            <tr>
+              <td className="px-6 py-10 text-center text-sm text-on-surface-variant" colSpan={3}>
+                {RECIPIENT_COPY.list.empty}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </DataTable>
   )
 }

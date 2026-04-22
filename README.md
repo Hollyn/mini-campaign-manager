@@ -7,7 +7,7 @@ Mini Campaign Manager is yarn monorepo for creating, scheduling, sending, and tr
 1. Start full stack:
 
 ```bash
-docker compose up --build
+SEED=true docker compose up --build
 ```
 
 2. Open app: `http://localhost:5173`
@@ -19,7 +19,7 @@ docker compose up --build
 Notes:
 
 - Compose waits for Postgres health, runs migrations before API boot, and uses `http://api:4000` for container-to-container Vite proxying
-- Demo data loads when `SEED=true`; `.env.example` ships with that value for quick start
+- Demo data loads only when `SEED=true`; `.env.example` now defaults to `false` for safer non-demo environments
 - Set `SEED=false` if you want to keep existing data on later restarts
 
 ## Manual Setup
@@ -94,13 +94,16 @@ App URLs:
 | `POSTGRES_PASSWORD` | `campaign` | Docker Compose Postgres password |
 | `POSTGRES_PORT` | `55433` | Host port exposed for local Postgres access |
 | `DATABASE_URL` | `postgresql://campaign:campaign@localhost:55433/campaign_manager` | Local API and migration connection string |
+| `APP_ORIGIN` | `http://localhost:5173` | Primary allowed browser origin for cookie-backed write requests |
+| `ALLOWED_ORIGINS` | empty | Extra comma-separated trusted origins for cookie-backed write requests |
 | `TEST_DATABASE_URL` | Derived from `DATABASE_URL` | Optional override for Jest database |
 | `JWT_SECRET` | `change_me_in_production` | Session signing secret |
 | `JWT_EXPIRES_IN` | `7d` | JWT lifetime |
+| `CAMPAIGN_PROCESSOR_POLL_MS` | `2000` | Poll interval for scheduled-send and stuck-send recovery sweeps |
 | `PORT` | `4000` | API port |
 | `FRONTEND_PORT` | `5173` | Vite dev server port |
 | `VITE_API_PROXY_TARGET` | `http://localhost:4000` | Local frontend proxy target for `/api`; Docker Compose overrides this to `http://api:4000` |
-| `SEED` | `true` | Compose startup seeding toggle |
+| `SEED` | `false` | Compose startup seeding toggle; set to `true` only when you want demo data loaded |
 
 ## Testing
 

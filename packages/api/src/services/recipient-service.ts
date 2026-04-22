@@ -1,13 +1,9 @@
-import { Op, UniqueConstraintError } from 'sequelize'
+import { Op, Order, UniqueConstraintError } from 'sequelize'
 
 import { Recipient } from '../models'
 import { RECIPIENT_MESSAGES } from '../constants/recipients'
 import { AppError } from '../utils/app-error'
-import {
-  CreateRecipientRequest,
-  RecipientListQuery,
-  UpdateRecipientRequest
-} from '../validations/recipient'
+import { CreateRecipientRequest, RecipientListQuery, UpdateRecipientRequest } from '../validations/recipient'
 
 const toConflictError = (error: UniqueConstraintError) => {
   const details = error.errors
@@ -27,12 +23,23 @@ const findRecipientOrThrow = async (id: string) => {
   return recipient
 }
 
+const toRecipientOrder = (query: RecipientListQuery): Order => {
+  const direction = query.sortOrder.toUpperCase() as 'ASC' | 'DESC'
+
+  switch (query.sortBy) {
+    case 'email':
+      return [['email', direction]]
+    default:
+      return [['name', direction]]
+  }
+}
+
 export const listRecipients = async (query: RecipientListQuery) => {
   const offset = (query.page - 1) * query.limit
   const { count, rows } = await Recipient.findAndCountAll({
     limit: query.limit,
     offset,
-    order: [['createdAt', 'DESC']],
+    order: toRecipientOrder(query),
     where:
       query.search.length > 0
         ? {

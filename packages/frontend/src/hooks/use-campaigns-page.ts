@@ -3,25 +3,30 @@ import { ChangeEvent, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { CampaignListItem } from '../api/types'
+import { DATA_TABLE_PAGE_SIZE_OPTIONS, DATA_TABLE_SEARCH_DEBOUNCE_MS } from '../constants/datatable'
 import {
-  CAMPAIGN_SEARCH_DEBOUNCE_MS,
+  CAMPAIGN_COPY,
+  CAMPAIGN_DEFAULT_SORT,
   campaignDetailRoute,
   campaignEditRoute,
-  campaignNewRoute,
-  CAMPAIGN_COPY
+  campaignNewRoute
 } from '../constants/campaigns'
+import { toggleSort } from '../lib/data-table'
+import { getRequestErrorMessage } from '../lib/request-error'
 import { useDebouncedValue } from './use-debounced-value'
 import { useCampaigns } from './use-campaigns'
 import { useDeleteCampaign } from './use-delete-campaign'
-import { getRequestErrorMessage } from '../lib/request-error'
 
 export const useCampaignsPage = () => {
   const navigate = useNavigate()
   const [activePage, setActivePage] = useState(1)
   const [deleteCandidate, setDeleteCandidate] = useState<CampaignListItem | null>(null)
+  const [pageSize, setPageSize] = useState<number>(DATA_TABLE_PAGE_SIZE_OPTIONS[0])
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebouncedValue(search, CAMPAIGN_SEARCH_DEBOUNCE_MS)
-  const campaignsQuery = useCampaigns(activePage, debouncedSearch)
+  const [sortBy, setSortBy] = useState<typeof CAMPAIGN_DEFAULT_SORT.field>(CAMPAIGN_DEFAULT_SORT.field)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(CAMPAIGN_DEFAULT_SORT.direction)
+  const debouncedSearch = useDebouncedValue(search, DATA_TABLE_SEARCH_DEBOUNCE_MS)
+  const campaignsQuery = useCampaigns(activePage, pageSize, debouncedSearch, sortBy, sortDirection)
   const deleteMutation = useDeleteCampaign({
     onSuccess: async () => {
       const currentLength = campaignsQuery.data?.campaigns.length ?? 0
@@ -55,6 +60,18 @@ export const useCampaignsPage = () => {
     setActivePage(1)
   }
 
+  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setPageSize(Number(event.target.value))
+    setActivePage(1)
+  }
+
+  const handleSortChange = (nextSortBy: typeof sortBy) => {
+    const nextSort = toggleSort(sortBy, sortDirection, nextSortBy)
+    setSortBy(nextSort.field)
+    setSortDirection(nextSort.direction)
+    setActivePage(1)
+  }
+
   const handleNextPage = () => {
     const totalPages = campaignsQuery.data?.pagination.totalPages ?? 0
 
@@ -63,6 +80,17 @@ export const useCampaignsPage = () => {
 
   const handlePreviousPage = () => {
     setActivePage((currentPage) => (currentPage <= 1 ? currentPage : currentPage - 1))
+  }
+
+  const handlePageChange = (page: number) => {
+    const totalPages = campaignsQuery.data?.pagination.totalPages ?? 0
+
+    if (totalPages === 0) {
+      setActivePage(1)
+      return
+    }
+
+    setActivePage(Math.min(Math.max(page, 1), totalPages))
   }
 
   const openDeleteModal = (campaign: CampaignListItem) => {
@@ -86,13 +114,15 @@ export const useCampaignsPage = () => {
   return {
     campaigns: campaignsQuery.data?.campaigns ?? [],
     closeDeleteModal,
-    closeToLiveTotal: campaignsQuery.data?.pagination.total ?? 0,
     deleteCandidate,
     deleteErrorMessage,
     handleDeleteConfirm,
     handleNextPage,
+    handlePageChange,
+    handlePageSizeChange,
     handlePreviousPage,
     handleSearchChange,
+    handleSortChange,
     isDeleteOpen: Boolean(deleteCandidate),
     isDeleting: deleteMutation.isPending,
     isLoading: campaignsQuery.isPending,
@@ -102,8 +132,11 @@ export const useCampaignsPage = () => {
     onEditCampaign: (campaignId: string) => navigate(campaignEditRoute(campaignId)),
     onOpenCampaign: (campaignId: string) => navigate(campaignDetailRoute(campaignId)),
     pageErrorMessage,
+    pageSize,
     pagination: campaignsQuery.data?.pagination ?? null,
     search,
-    searchValue: debouncedSearch
+    sortBy,
+    sortDirection,
+    totalCampaigns: campaignsQuery.data?.pagination.total ?? 0
   }
 }

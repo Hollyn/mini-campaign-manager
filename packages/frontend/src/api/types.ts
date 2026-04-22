@@ -1,8 +1,16 @@
 export const campaignStatuses = ['draft', 'sending', 'scheduled', 'sent'] as const
 export const campaignRecipientStatuses = ['pending', 'sent', 'failed'] as const
+export const sortDirections = ['asc', 'desc'] as const
+export const campaignListSortFields = ['createdAt', 'name', 'recipientCount', 'status', 'subject'] as const
+export const campaignRecipientListSortFields = ['email', 'name', 'openedAt', 'sentAt', 'status'] as const
+export const recipientListSortFields = ['email', 'name'] as const
 
 export type CampaignStatus = (typeof campaignStatuses)[number]
 export type CampaignRecipientStatus = (typeof campaignRecipientStatuses)[number]
+export type SortDirection = (typeof sortDirections)[number]
+export type CampaignListSortBy = (typeof campaignListSortFields)[number]
+export type CampaignRecipientListSortBy = (typeof campaignRecipientListSortFields)[number]
+export type RecipientListSortBy = (typeof recipientListSortFields)[number]
 
 export interface ApiError {
   error: string
@@ -27,6 +35,7 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
+  token?: string
   user: AuthUser
 }
 
@@ -97,9 +106,11 @@ export interface ScheduleCampaignRequest {
 }
 
 export interface CampaignListQuery {
-  page: number
   limit: number
+  page: number
   search?: string
+  sortBy: CampaignListSortBy
+  sortOrder: SortDirection
   status?: CampaignStatus
 }
 
@@ -123,6 +134,14 @@ export interface Recipient {
   email: string
   id: string
   name: string
+}
+
+export interface RecipientListQuery {
+  limit: number
+  page: number
+  search?: string
+  sortBy: RecipientListSortBy
+  sortOrder: SortDirection
 }
 
 export interface CreateRecipientRequest {

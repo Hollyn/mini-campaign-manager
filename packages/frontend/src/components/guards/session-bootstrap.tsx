@@ -44,7 +44,7 @@ export const SessionBootstrap = () => {
     return (
       <main className="flex min-h-screen items-center bg-surface px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <Card className="mx-auto max-w-xl space-y-4 bg-surface-container-lowest p-8 sm:p-10">
-          <p className="text-[0.75rem] font-medium uppercase tracking-[0.3em] text-on-surface-variant">
+          <p className="text-[0.75rem] font-medium tracking-[0.08em] text-on-surface-variant">
             {AUTH_COPY.bootstrap.eyebrow}
           </p>
           <h1 className="text-3xl font-medium tracking-tight text-on-background">

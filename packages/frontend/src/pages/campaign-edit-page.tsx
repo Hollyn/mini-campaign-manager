@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Alert } from '../components/ui/alert'
 import { CampaignFormPanel } from '../components/campaigns/campaign-form-panel'
 import { CampaignListSkeleton } from '../components/campaigns/campaign-list-skeleton'
+import { PageBackLink } from '../components/ui/page-back-link'
 import { useCampaignFormPage } from '../hooks/use-campaign-form-page'
 
 export const CampaignEditPage = () => {
@@ -14,10 +15,10 @@ export const CampaignEditPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <PageBackLink label="Back to Campaigns" onClick={page.onBack} />
       {page.pageErrorMessage ? <Alert variant="destructive">{page.pageErrorMessage}</Alert> : null}
       <CampaignFormPanel
-        campaignName={page.campaignName}
         errorMessage={page.formErrorMessage}
         formValues={page.formValues}
         isReadonly={page.isReadonly}
@@ -25,6 +26,7 @@ export const CampaignEditPage = () => {
         isSubmitting={page.isSubmitting}
         mode={page.mode}
         onBack={page.onBack}
+        onBodyChange={page.handleBodyChange}
         onFieldChange={page.handleFieldChange}
         onRecipientSearchChange={page.handleRecipientSearchChange}
         onRecipientToggle={page.handleRecipientToggle}
@@ -32,7 +34,6 @@ export const CampaignEditPage = () => {
         recipientOptions={page.recipientOptions}
         recipientSearch={page.recipientSearch}
         selectedRecipients={page.selectedRecipients}
-        status={page.status}
       />
     </div>
   )

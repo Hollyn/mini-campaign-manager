@@ -24,10 +24,13 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-campaign}:${POSTGRES_PASSWORD:-campaign}@db:5432/${POSTGRES_DB:-campaign_manager}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:5173}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
       JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CAMPAIGN_PROCESSOR_POLL_MS: ${CAMPAIGN_PROCESSOR_POLL_MS:-2000}
       PORT: ${PORT:-4000}
-      SEED: ${SEED:-true}
+      SEED: ${SEED:-false}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$PORT/health >/dev/null || exit 1"]
       interval: 5s
@@ -39,7 +42,7 @@ services:
     command: >-
       sh -c "yarn workspace @campaign/db migrate &&
       if [ \"$$SEED\" = \"true\" ]; then yarn workspace @campaign/db seed; fi &&
-      yarn workspace @campaign/api start:docker"
+      yarn workspace @campaign/api start"
 
   frontend:
     build:

@@ -1,19 +1,74 @@
+import { AUTH_ROUTES } from './auth'
+import { campaignNewRoute } from './campaigns'
+
+export type AppShellIconName = 'campaigns' | 'logout' | 'recipients' | 'workspace'
+
+export interface AppShellPageMeta {
+  section: string
+  title: string
+}
+
 export const APP_SHELL_NAVIGATION = [
   {
-    description: 'Draft and monitor sends',
+    icon: 'campaigns' as const,
     label: 'Campaigns',
-    to: '/campaigns'
+    to: AUTH_ROUTES.campaigns
   },
   {
-    description: 'Manage contact records',
+    icon: 'recipients' as const,
     label: 'Recipients',
-    to: '/recipients'
+    to: AUTH_ROUTES.recipients
   }
 ] as const
 
 export const APP_SHELL_COPY = {
   brand: 'Mini Campaign Manager',
-  description: 'Move between campaign command and recipient roster without losing delivery context.',
-  heading: 'Operations cockpit',
+  navigationLabel: 'Workspace',
   signedInLabel: 'Signed in'
 } as const
+
+export const APP_SHELL_PAGE_COPY = {
+  campaignDetail: {
+    section: 'Campaigns',
+    title: 'Campaign Detail'
+  },
+  campaignEdit: {
+    section: 'Campaigns',
+    title: 'Edit Campaign'
+  },
+  campaignNew: {
+    section: 'Campaigns',
+    title: 'New Campaign'
+  },
+  campaigns: {
+    section: 'Workspace',
+    title: 'Campaigns'
+  },
+  recipients: {
+    section: 'Workspace',
+    title: 'Recipients'
+  }
+} as const satisfies Record<string, AppShellPageMeta>
+
+const campaignRoutePrefix = `${AUTH_ROUTES.campaigns}/`
+const campaignEditRouteSuffix = '/edit'
+
+export const getAppShellPageMeta = (pathname: string): AppShellPageMeta => {
+  if (pathname === campaignNewRoute) {
+    return APP_SHELL_PAGE_COPY.campaignNew
+  }
+
+  if (pathname.startsWith(campaignRoutePrefix) && pathname.endsWith(campaignEditRouteSuffix)) {
+    return APP_SHELL_PAGE_COPY.campaignEdit
+  }
+
+  if (pathname.startsWith(campaignRoutePrefix)) {
+    return APP_SHELL_PAGE_COPY.campaignDetail
+  }
+
+  if (pathname === AUTH_ROUTES.recipients) {
+    return APP_SHELL_PAGE_COPY.recipients
+  }
+
+  return APP_SHELL_PAGE_COPY.campaigns
+}

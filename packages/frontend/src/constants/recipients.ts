@@ -1,10 +1,16 @@
-import { CreateRecipientRequest } from '../api/types'
+import { CreateRecipientRequest, RecipientListSortBy } from '../api/types'
 
 export const RECIPIENT_PAGE_SIZE = 8
 
+export const RECIPIENT_DEFAULT_SORT = {
+  direction: 'asc' as const,
+  field: 'name' as RecipientListSortBy
+}
+
 export const RECIPIENT_QUERY_KEYS = {
   all: ['recipients'] as const,
-  list: (page: number) => ['recipients', 'list', page] as const
+  list: (page: number, limit: number, search: string, sortBy: string, sortOrder: string) =>
+    ['recipients', 'list', page, limit, search, sortBy, sortOrder] as const
 } as const
 
 export const RECIPIENT_COPY = {
@@ -14,8 +20,6 @@ export const RECIPIENT_COPY = {
     close: 'Close',
     delete: 'Delete',
     edit: 'Edit',
-    nextPage: 'Next',
-    previousPage: 'Previous',
     save: 'Save changes'
   },
   deleteModal: {
@@ -44,17 +48,11 @@ export const RECIPIENT_COPY = {
   },
   helper: {
     pagination: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} recipients`,
-    refreshing: 'Refreshing page',
-    totalCount: (total: number) => `${total} total recipients`
+    totalCount: (total: number) => `${total} recipients`
   },
-  intro: {
-    badge: 'Recipient Studio',
-    description: 'Shape clean contact lists for campaign drafting, scheduling, and send workflows.',
-    liveTotalLabel: 'Live total',
-    title: 'Recipient management'
-  },
-  row: {
-    eyebrow: 'Contact record'
+  list: {
+    empty: 'No recipients match this view.',
+    searchPlaceholder: 'Search by name or email'
   },
   states: {
     creating: 'Creating...',

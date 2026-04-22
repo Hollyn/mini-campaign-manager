@@ -8,6 +8,10 @@ import { createApp } from '../src/app'
 import { sequelize } from '../src/config/database'
 import { env } from '../src/config/env'
 import { Campaign, CampaignRecipient, Recipient, User } from '../src/models'
+import {
+  recoverSendingCampaigns,
+  runScheduledCampaignSweep
+} from '../src/services/campaign-service'
 
 const app = createApp()
 
@@ -122,6 +126,23 @@ describe('campaign routes', () => {
     expect(response.body.error).toBe('Only draft campaigns can be edited')
   })
 
+  it('GET /api/campaigns accepts bearer token authentication', async () => {
+    await createUser()
+
+    const loginResponse = await request(app).post('/api/auth/login').send({
+      email: 'demo@example.com',
+      password: 'password123'
+    })
+
+    const response = await request(app)
+      .get('/api/campaigns')
+      .set('Authorization', `Bearer ${loginResponse.body.token}`)
+
+    expect(loginResponse.status).toBe(200)
+    expect(loginResponse.body.token).toEqual(expect.any(String))
+    expect(response.status).toBe(200)
+  })
+
   it('POST /api/campaigns/:id/schedule with a past scheduled_at returns 422', async () => {
     const user = await createUser()
     const campaign = await Campaign.create({
@@ -142,6 +163,45 @@ describe('campaign routes', () => {
 
     expect(response.status).toBe(422)
     expect(response.body.error).toBe('Scheduled time must be in the future')
+  })
+
+  it('GET /api/campaigns sorts by name when requested', async () => {
+    const user = await createUser()
+    await Campaign.bulkCreate([
+      {
+        body: 'Body',
+        createdAt: new Date(),
+        createdBy: user.id,
+        name: 'Zulu campaign',
+        scheduledAt: null,
+        status: 'draft',
+        subject: 'Subject Z',
+        updatedAt: new Date()
+      },
+      {
+        body: 'Body',
+        createdAt: new Date(),
+        createdBy: user.id,
+        name: 'Alpha campaign',
+        scheduledAt: null,
+        status: 'draft',
+        subject: 'Subject A',
+        updatedAt: new Date()
+      }
+    ])
+    const agent = await createAuthenticatedAgent()
+
+    const response = await agent.get('/api/campaigns').query({
+      limit: 8,
+      page: 1,
+      sortBy: 'name',
+      sortOrder: 'asc'
+    })
+
+    expect(response.status).toBe(200)
+    expect(response.body.campaigns).toHaveLength(2)
+    expect(response.body.campaigns[0].name).toBe('Alpha campaign')
+    expect(response.body.campaigns[1].name).toBe('Zulu campaign')
   })
 
   it('POST /api/campaigns/:id/send processes all pending recipients and marks campaign sent', async () => {
@@ -194,5 +254,66 @@ describe('campaign routes', () => {
     expect(detailResponse.body.stats.opened).toBe(openedCount)
     expect(detailResponse.body.stats.sent).toBe(sentCount)
     expect(detailResponse.body.stats.open_rate).toBe(expectedOpenRate)
+  })
+
+  it('scheduled campaign sweep sends due scheduled campaigns', async () => {
+    const user = await createUser()
+    const recipients = await createRecipients()
+    const campaign = await Campaign.create({
+      body: 'Body',
+      createdAt: new Date(),
+      createdBy: user.id,
+      name: 'Scheduled campaign',
+      scheduledAt: new Date(Date.now() - 1_000),
+      status: 'scheduled',
+      subject: 'Subject',
+      updatedAt: new Date()
+    })
+
+    await CampaignRecipient.bulkCreate(
+      recipients.map((recipient) => ({
+        campaignId: campaign.id,
+        recipientId: recipient.id,
+        status: 'pending' as const
+      }))
+    )
+
+    await runScheduledCampaignSweep()
+    await waitForCampaignToBeSent(campaign.id)
+
+    const scheduledCampaign = await Campaign.findByPk(campaign.id)
+
+    expect(scheduledCampaign?.status).toBe('sent')
+    expect(scheduledCampaign?.scheduledAt).toBeNull()
+  })
+
+  it('recoverSendingCampaigns resumes pending sending campaigns', async () => {
+    const user = await createUser()
+    const recipients = await createRecipients()
+    const campaign = await Campaign.create({
+      body: 'Body',
+      createdAt: new Date(),
+      createdBy: user.id,
+      name: 'Sending campaign',
+      scheduledAt: null,
+      status: 'sending',
+      subject: 'Subject',
+      updatedAt: new Date()
+    })
+
+    await CampaignRecipient.bulkCreate(
+      recipients.map((recipient) => ({
+        campaignId: campaign.id,
+        recipientId: recipient.id,
+        status: 'pending' as const
+      }))
+    )
+
+    await recoverSendingCampaigns()
+    await waitForCampaignToBeSent(campaign.id)
+
+    const resumedCampaign = await Campaign.findByPk(campaign.id)
+
+    expect(resumedCampaign?.status).toBe('sent')
   })
 })

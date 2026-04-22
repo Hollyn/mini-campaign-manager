@@ -6,7 +6,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "start:docker": "tsx src/server.ts",
+    "start:docker": "node dist/server.js",
     "test": "NODE_ENV=test jest --runInBand"
   },
   "dependencies": {

@@ -34,7 +34,7 @@ export const Dialog = ({ children, description, eyebrow, footer, isOpen, onClose
       <div className="w-full max-w-lg rounded-[1.5rem] border border-white/60 bg-surface-container-lowest p-6 shadow-[0_32px_80px_rgba(31,49,89,0.18)] sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
-            {eyebrow ? <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-primary">{eyebrow}</p> : null}
+            {eyebrow ? <p className="text-[0.72rem] font-medium tracking-[0.08em] text-primary">{eyebrow}</p> : null}
             <h2 className="text-2xl font-medium tracking-tight text-on-background">{title}</h2>
             {description ? <p className="text-sm leading-6 text-on-surface-variant">{description}</p> : null}
           </div>
