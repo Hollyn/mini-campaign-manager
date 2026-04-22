@@ -1,0 +1,22 @@
+{
+  "name": "mini-campaign-manager",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build",
+    "dev": "yarn dev:setup && concurrently -k -n api,frontend -c blue,green \"yarn dev:api\" \"yarn dev:frontend\"",
+    "dev:db": "docker compose up -d db",
+    "dev:db:wait": "sh -c 'until docker compose exec -T db pg_isready -U ${POSTGRES_USER:-campaign} -d ${POSTGRES_DB:-campaign_manager}; do sleep 2; done'",
+    "dev:setup": "yarn dev:db && yarn dev:db:wait && yarn db:migrate",
+    "db:migrate": "yarn workspace @campaign/db migrate",
+    "db:seed": "yarn workspace @campaign/db seed",
+    "dev:api": "yarn workspace @campaign/api dev",
+    "dev:frontend": "yarn workspace @campaign/frontend dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
